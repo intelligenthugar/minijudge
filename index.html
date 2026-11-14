@@ -8,11 +8,11 @@
 </head>
 <body>
 <header>
-  <b>MiniJudge</b>
-  <div class="row" style="margin:0"><small id="who">未登入（紀錄不會儲存）</small><button id="auth">Google 登入</button></div>
+  <b>🚀 MiniJudge</b>
+  <div class="row" style="margin:0"><a id="adminLink" href="admin.html" hidden>管理後台</a><small id="who">未登入（紀錄不會儲存）</small><button id="auth">Google 登入</button></div>
 </header>
 <main>
-  <nav id="list"></nav>
+  <nav><div id="stat"></div><div id="list"></div></nav>
   <section id="view"></section>
 </main>
 <script type="module" src="js/app.js"></script>
