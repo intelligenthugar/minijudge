@@ -39,7 +39,6 @@ section{padding:20px 28px;min-width:0}
 main.single #box{margin:24px 0}
 h2{margin-top:0;color:var(--h)}
 pre,.box{background:var(--code);border-left:4px solid #818cf8;padding:10px 12px;border-radius:6px;overflow-x:auto;margin:4px 0}
-textarea{width:100%;height:260px;font:13px/1.5 ui-monospace,Menlo,monospace;background:var(--ta);color:var(--tafg);border:1px solid var(--bd);border-radius:10px;padding:12px;tab-size:4}
 .row{display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap}
 .res div{padding:2px 0}
 .ac{color:var(--ok)}.wa{color:var(--ng)}
@@ -55,3 +54,38 @@ input{width:100%}
 *{transition:background-color .35s ease,color .35s ease,border-color .35s ease,box-shadow .35s ease}
 .bar i{transition:width .4s ease}
 @media(prefers-reduced-motion:reduce){*,body::before,body::after{transition:none!important}}
+/* 使用者名稱方框 */
+.chip{display:inline-flex;align-items:center;gap:8px;padding:3px 12px 3px 4px;border-radius:8px;background:#ffffff26;border:1px solid #ffffff55;color:#fff;max-width:260px}
+.chip:empty{display:none}
+.av{width:26px;height:26px;border-radius:50%;object-fit:cover;background:#ffffff40;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none}
+.nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
+.tag{font-style:normal;font-size:11px;padding:0 8px;border-radius:99px;background:#fbbf24;color:#422006;font-weight:600}
+/* 題目標題列與參考答案按鈕 */
+.ttl{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.ttl h2,.ttl h3{margin:0 0 4px}
+button.ans{background:transparent;border-color:var(--warn);color:var(--warn);white-space:nowrap}
+button.ans:hover{background:var(--warn);color:#1a1200}
+/* 程式碼顏色 */
+:root{--c-kw:#c792ea;--c-str:#c3e88d;--c-num:#f78c6c;--c-cm:#8890b5;--c-fn:#82aaff;--c-bi:#ffcb6b}
+:root[data-theme=light]{--c-kw:#7c3aed;--c-str:#15803d;--c-num:#c2410c;--c-cm:#6b7280;--c-fn:#1d4ed8;--c-bi:#b45309}
+.tk-kw{color:var(--c-kw)}.tk-str{color:var(--c-str)}.tk-num{color:var(--c-num)}.tk-cm{color:var(--c-cm);font-style:italic}.tk-fn{color:var(--c-fn)}.tk-bi{color:var(--c-bi)}
+pre.code{white-space:pre;font:13px/1.55 ui-monospace,Menlo,monospace;padding:12px 14px;margin:6px 0;max-height:50vh;overflow:auto}
+/* 有顏色的編輯器：透明 textarea 疊在上色後的 pre 上（字型、padding、行高必須一致） */
+.editor{position:relative;height:260px;background:var(--ta);border:1px solid var(--bd);border-radius:10px;--c-kw:#c792ea;--c-str:#c3e88d;--c-num:#f78c6c;--c-cm:#8890b5;--c-fn:#82aaff;--c-bi:#ffcb6b}
+.editor pre,.editor textarea{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:12px;font:13px/1.5 ui-monospace,Menlo,monospace;tab-size:4;white-space:pre;overflow:auto;border:0;border-radius:10px;letter-spacing:normal}
+.editor pre{background:none;color:var(--tafg);pointer-events:none;scrollbar-width:none}
+.editor pre::-webkit-scrollbar{display:none}
+.editor textarea{background:transparent;color:transparent;caret-color:var(--tafg);resize:none;outline:none}
+.editor textarea::selection{background:#6366f188}
+/* 對話視窗 */
+dialog{padding:0;border:1px solid var(--bd);border-radius:14px;background:var(--card);color:var(--fg);width:min(760px,92vw);max-height:88vh;box-shadow:0 10px 40px #0008}
+dialog[open]{animation:pop .2s ease}
+dialog::backdrop{background:#000a}
+.dc{padding:20px 24px}
+.dc h4{margin:14px 0 4px;color:var(--h)}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}}
+/* 置中提示視窗、不是管理員頁面 */
+#notice{width:min(420px,90vw)}
+.nt{text-align:center}
+.nt .row{justify-content:center}
+.btn.go{background:linear-gradient(90deg,#4f46e5,#0ea5e9);color:#fff;border:0;margin-top:8px}

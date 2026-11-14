@@ -134,7 +134,67 @@ const RAW = [
  desc: "輸入 n 個整數與目標值 t，計算有幾組 (i, j)（i < j）滿足 a[i] + a[j] = t。",
  inFmt: "第一行 n t（1 ≤ n ≤ 1000，|t| ≤ 2×10^9），第二行 n 個整數（|x| ≤ 10^9）", outFmt: "一個整數",
  ref: s => { const [l1, l2] = s.split("\n"), t = +l1.split(" ")[1], a = l2.split(" ").map(Number); let r = 0; for (let i = 0; i < a.length; i++) for (let j = i + 1; j < a.length; j++) if (a[i] + a[j] === t) r++; return String(r); },
- inputs: ["4 5\n1 2 3 4", "3 10\n1 2 3", "5 4\n2 2 2 2 2", "2 0\n5 -5", pl(arr(100, -20, 20), 0), pl(arr(1000, -50, 50), 0), pl(arr(1000, 0, 1), 1), pl(arr(1000, -1e9, 1e9), 1)]}
+ inputs: ["4 5\n1 2 3 4", "3 10\n1 2 3", "5 4\n2 2 2 2 2", "2 0\n5 -5", pl(arr(100, -20, 20), 0), pl(arr(1000, -50, 50), 0), pl(arr(1000, 0, 1), 1), pl(arr(1000, -1e9, 1e9), 1)]},
+
+{id: "a021", title: "質數個數", limit: 4000,
+ desc: "輸入 n，輸出 1 到 n 之間（含 n）有幾個質數。",
+ inFmt: "一個整數 n（1 ≤ n ≤ 100000）", outFmt: "一個整數",
+ ref: s => { const n = +s, c = Array(n + 1).fill(true); let r = 0; for (let i = 2; i <= n; i++) if (c[i]) { r++; for (let j = i * i; j <= n; j += i) c[j] = false; } return String(r); },
+ inputs: ["1", "2", "3", "10", "100", "1000", "9973", "99991", "100000"]},
+
+{id: "a022", title: "第二大的數", limit: 2000,
+ desc: "輸入 n 個整數，輸出第二大的數。相同的數只算一個（保證至少有兩種不同的數）。",
+ inFmt: "第一行 n（2 ≤ n ≤ 1000），第二行 n 個整數（|x| ≤ 10^9）", outFmt: "一個整數",
+ ref: s => { const a = [...new Set(s.split("\n")[1].split(" ").map(Number))].sort((x, y) => y - x); return String(a[1]); },
+ inputs: ["5\n3 9 2 7 1", "2\n1 2", "4\n5 5 3 3", "3\n-1 -2 -3", "3\n9 9 8", "6\n1 2 3 4 5 5", list(arr(1000, -1e9, 1e9)), list(arr(1000, 0, 5))]},
+
+{id: "a023", title: "連續字元壓縮", limit: 2000,
+ desc: "輸入一個小寫英文字串，把連續相同的字元壓縮成「字元＋次數」。例如 aaabcc → a3b1c2。",
+ inFmt: "一行字串（長度 ≤ 1000）", outFmt: "壓縮後的字串",
+ ref: s => { let o = "", i = 0; while (i < s.length) { let j = i; while (j < s.length && s[j] === s[i]) j++; o += s[i] + (j - i); i = j; } return o; },
+ inputs: ["aaabcc", "a", "abc", "zzzzzz", "aabbaa", "a".repeat(1000), str(1000, "ab"), str(500, "abc")]},
+
+{id: "a024", title: "最小公倍數", limit: 2000,
+ desc: "輸入兩個正整數 a、b，輸出它們的最小公倍數。",
+ inFmt: "一行，兩個正整數 a b（1 ≤ a,b ≤ 10^6）", outFmt: "一個整數",
+ ref: s => { const [a, b] = s.split(" ").map(Number); let x = a, y = b; while (y) [x, y] = [y, x % y]; return String(a / x * b); },
+ inputs: ["4 6", "7 3", "1 1", "12 12", "1000000 999999", "999983 999979", "123456 7890", "500000 250000", "1 1000000"]},
+
+{id: "a025", title: "陣列右旋", limit: 2000,
+ desc: "輸入 n 個整數與 k，把陣列整體向右旋轉 k 次（每次把最後一個移到最前面），輸出結果，以空白分隔。",
+ inFmt: "第一行 n k（1 ≤ n ≤ 1000，0 ≤ k ≤ 10^9），第二行 n 個整數", outFmt: "旋轉後的陣列",
+ ref: s => { const [l1, l2] = s.split("\n"), [n, k] = l1.split(" ").map(Number), a = l2.split(" "), r = k % n; return r ? [...a.slice(n - r), ...a.slice(0, n - r)].join(" ") : a.join(" "); },
+ inputs: ["5 2\n1 2 3 4 5", "3 0\n1 2 3", "1 5\n7", "4 4\n1 2 3 4", "4 6\n1 2 3 4", rot(1000, 1), rot(1000, 999999999), rot(500, 12345)]},
+
+{id: "a026", title: "找位置", limit: 2000,
+ desc: "輸入 n 個整數與目標 t，輸出 t 第一次出現的位置（從 1 開始算）；沒有出現則輸出 -1。",
+ inFmt: "第一行 n t（1 ≤ n ≤ 1000），第二行 n 個整數（|x|,|t| ≤ 10^9）", outFmt: "一個整數",
+ ref: s => { const [l1, l2] = s.split("\n"), t = +l1.split(" ")[1], a = l2.split(" ").map(Number); return String(a.indexOf(t) + 1 || -1); },
+ inputs: ["5 3\n1 2 3 4 3", "3 9\n1 2 3", "1 5\n5", "4 -1\n-1 -1 -1 -1", pl(arr(1000, -50, 50), 7), pl(arr(1000, -50, 50), 100), pl([...arr(999, 0, 9), 77], 77), pl(arr(1000, -1e9, 1e9), 0)]},
+
+{id: "a027", title: "最大連續子陣列和", limit: 2000,
+ desc: "輸入 n 個整數，求「連續」的一段（至少一個數）總和最大是多少。",
+ inFmt: "第一行 n（1 ≤ n ≤ 1000），第二行 n 個整數（|x| ≤ 10^9）", outFmt: "一個整數",
+ ref: s => { const a = s.split("\n")[1].split(" ").map(Number); let b = a[0], c = a[0]; for (let i = 1; i < a.length; i++) { c = Math.max(a[i], c + a[i]); b = Math.max(b, c); } return String(b); },
+ inputs: ["5\n-2 1 -3 4 -1", "1\n-5", "3\n-3 -2 -1", "4\n1 2 3 4", "9\n-2 1 -3 4 -1 2 1 -5 4", list(arr(1000, -100, 100)), list(arr(1000, -1e9, 1e9)), list(arr(1000, -10, 3))]},
+
+{id: "a028", title: "不同單字數", limit: 2000,
+ desc: "輸入一行由小寫單字組成的句子（單字以一個空白分隔），輸出共有幾種不同的單字。",
+ inFmt: "一行，單字之間以一個空白分隔（總長度 ≤ 5000）", outFmt: "一個整數",
+ ref: s => String(new Set(s.split(" ")).size),
+ inputs: ["a b a c b", "hello", "a a a a", "the quick brown fox jumps over the lazy dog", "to be or not to be", words(200), words(800)]},
+
+{id: "a029", title: "巴斯卡三角形", limit: 2000,
+ desc: "輸入 n，輸出巴斯卡三角形的前 n 列，每列的數字以空白分隔。",
+ inFmt: "一個整數 n（1 ≤ n ≤ 15）", outFmt: "n 行。例如 n = 4 時：1 / 1 1 / 1 2 1 / 1 3 3 1（每列一行）",
+ ref: s => { let r = [1]; const o = []; for (let i = 0; i < +s; i++) { o.push(r.join(" ")); r = [1, ...r.slice(1).map((x, j) => x + r[j]), 1]; } return o.join("\n"); },
+ inputs: ["1", "2", "3", "4", "5", "8", "10", "12", "15"]},
+
+{id: "a030", title: "FizzBuzz", limit: 2000,
+ desc: "輸入 n，依序輸出 1 到 n：3 的倍數輸出 Fizz，5 的倍數輸出 Buzz，同時是 15 的倍數輸出 FizzBuzz，其餘輸出數字本身。每個一行。",
+ inFmt: "一個整數 n（1 ≤ n ≤ 100）", outFmt: "n 行",
+ ref: s => Array.from({length: +s}, (_, i) => { const k = i + 1; return k % 15 === 0 ? "FizzBuzz" : k % 3 === 0 ? "Fizz" : k % 5 === 0 ? "Buzz" : String(k); }).join("\n"),
+ inputs: ["1", "3", "5", "10", "15", "16", "30", "50", "100"]}
 ];
 
 // 產生長度 n（偶數）的合法括號字串
@@ -148,8 +208,12 @@ function bal(n) {
 }
 function pl(a, t) { return `${a.length} ${t}\n${a.join(" ")}`; }
 
+function rot(n, k) { return `${n} ${k}\n${arr(n, -1000, 1000).join(" ")}`; }
+function words(n) { return Array.from({length: n}, () => str(ri(1, 3), "abc")).join(" "); }
+
 // 難度：1 簡單（預設）、2 中等、3 困難
-const LV = {a004: 2, a006: 2, a008: 2, a013: 2, a015: 2, a016: 2, a018: 2, a020: 2, a017: 3, a019: 3};
+const LV = {a004: 2, a006: 2, a008: 2, a013: 2, a015: 2, a016: 2, a018: 2, a020: 2, a017: 3, a019: 3,
+  a021: 2, a022: 2, a023: 2, a025: 2, a027: 3, a028: 2, a029: 2};
 
 export const PROBLEMS = RAW.map(p => {
   const tests = p.inputs.map(i => [i, p.ref(i)]);

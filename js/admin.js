@@ -1,4 +1,5 @@
 import {onUser, login, logout, getSite, setSite, isAdmin} from "./firebase.js";
+import {setWho, authError, notice} from "./ui.js";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
@@ -6,17 +7,18 @@ const box = $("#box");
 
 $("#auth").onclick = async () => {
   try { $("#auth").textContent === "登出" ? await logout() : await login(); }
-  catch (e) { alert("登入失敗：" + e.message); }
+  catch (e) { authError(e); }
 };
 
 onUser(async u => {
   $("#auth").textContent = u ? "登出" : "Google 登入";
-  $("#who").textContent = u ? (u.displayName || u.email) : "未登入";
-  if (!u) { box.innerHTML = "<p>請先登入管理員帳號。</p>"; return; }
-  if (!await isAdmin(u.uid)) {
-    box.innerHTML = `<h2 class="wa">你不是管理員</h2>
-      <p>你的 UID：</p><pre>${esc(u.uid)}</pre>
-      <p>如果你是站長：到 Firebase Console → Firestore → 開始集合，集合 ID 填 <b>admins</b>，文件 ID 貼上面的 UID，欄位隨意（例如 role = admin），儲存後重新整理本頁。</p>`;
+  setWho(u, false);
+  if (!u) { box.innerHTML = `<div class="closed"><div style="font-size:56px">🔐</div><h2>請先登入</h2><p>請使用管理員帳號登入。</p></div>`; return; }
+  const adm = await isAdmin(u.uid);
+  setWho(u, adm);
+  if (!adm) {
+    box.innerHTML = `<div class="closed"><div style="font-size:56px">🚫</div><h2>你不是管理員</h2>
+      <p>這個帳號沒有後台權限。</p><a class="btn go" href="index.html">回到首頁</a></div>`;
     return;
   }
   panel(await getSite());
@@ -37,5 +39,5 @@ function panel(s) {
 }
 async function save(open) {
   try { await setSite({open, message: $("#msg").value}); panel(await getSite()); }
-  catch (e) { alert("儲存失敗：" + e.message); }
+  catch (e) { notice(e.message, "儲存失敗"); }
 }

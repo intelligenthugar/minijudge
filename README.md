@@ -3,7 +3,9 @@
 純前端的線上程式評測網站，類似 ZeroJudge。可直接放在 GitHub Pages，**沒有自己的伺服器**，登入與紀錄交給 Firebase。
 
 ## 功能
-- 20 題題庫（簡單 / 中等 / 困難），每題 7～13 筆測資，含邊界值與大型隨機資料
+- 30 題題庫（簡單 / 中等 / 困難），每題 7～13 筆測資，含邊界值與大型隨機資料
+- 每題右上角有「💡 參考答案」按鈕：先跳出確認視窗，同意後顯示解析與有顏色的 Python 參考程式碼（可複製）
+- 程式碼編輯器與參考答案都有語法上色（Python / JavaScript）
 - 支援 **Python 3**（Pyodide）與 **JavaScript**，程式在瀏覽器的 Web Worker 內評測
 - 判定：AC、WA、TLE、RE
 - Google 登入，個人解題紀錄（通過與否、嘗試次數、最後提交的程式碼）存在 Firestore
@@ -19,6 +21,7 @@ minijudge/
 ├── fix.md              修改紀錄與不可破壞的規則
 ├── css/style.css       樣式（CSS 變數，深 / 淺色）
 ├── data/problems.js    題目與測資
+├── data/solutions.js   每題的解析與 Python 參考程式碼
 └── js/
     ├── config.js       Firebase 設定（自己建立，不在 zip 內）
     ├── firebase.js     登入、讀寫紀錄、網站開關、管理員判定
@@ -26,7 +29,9 @@ minijudge/
     ├── worker.js       在獨立執行緒執行使用者程式
     ├── app.js          前台介面
     ├── admin.js        後台介面
-    └── theme.js        深淺色切換
+    ├── highlight.js    語法上色
+    ├── theme.js        深淺色切換
+    └── ui.js           頂欄使用者名稱方框
 ```
 
 ## 部署步驟
@@ -53,7 +58,7 @@ export const firebaseConfig = {
 把整個專案推到 GitHub repo，Settings → Pages 選分支與根目錄。更新後用 **Ctrl+F5** 強制重新整理。
 
 ### 4. 設定管理員
-1. 用要當管理員的帳號登入 `admin.html`，頁面會顯示你的 UID。
+1. 取得要當管理員的帳號 UID：Firebase Console → Authentication → Users，那個帳號「使用者 UID」欄位。
 2. Firestore → 開始集合（Start collection），集合 ID `admins`，**文件 ID 貼上 UID**，欄位任意（例如 `role` = `admin`）。
 3. 重新整理 `admin.html`。每位管理員各建一份文件。
 
@@ -95,7 +100,7 @@ service cloud.firestore {
  ref: s => /* 參考解：輸入字串 → 答案字串 */,
  inputs: ["測資輸入1", "測資輸入2", ...]}
 ```
-標準答案由 `ref` 自動算出。難度在檔案底部的 `LV` 設定（1 簡單、2 中等、3 困難，沒寫預設 1）。
+標準答案由 `ref` 自動算出。**同時要到 `data/solutions.js` 補上同一題的 `exp`（解析）與 `py`（Python 參考程式碼）。**難度在檔案底部的 `LV` 設定（1 簡單、2 中等、3 困難，沒寫預設 1）。
 
 ## 本機測試
 ES Module 與 Web Worker 不能用雙擊開檔，要用本機伺服器：

@@ -1,6 +1,9 @@
 import {PROBLEMS} from "../data/problems.js";
 import {onUser, login, logout, loadSubs, saveSub, getSite, isAdmin} from "./firebase.js";
 import {judge} from "./judge.js";
+import {SOLUTIONS} from "../data/solutions.js";
+import {highlight} from "./highlight.js";
+import {setWho, authError} from "./ui.js";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"}[c]));
@@ -13,13 +16,13 @@ let user = null, subs = {}, cur = PROBLEMS[0], note = "";
 
 $("#auth").onclick = async () => {
   try { user ? await logout() : await login(); }
-  catch (e) { alert("登入失敗：" + e.message); }
+  catch (e) { authError(e); }
 };
 onUser(async u => {
   user = u; subs = u ? await loadSubs(u.uid) : {};
   const adm = u ? await isAdmin(u.uid) : false, site = await getSite();
   $("#adminLink").hidden = !adm;
-  $("#who").textContent = u ? (u.displayName || u.email) : "未登入（紀錄不會儲存）";
+  setWho(u, adm);
   $("#auth").textContent = u ? "登出" : "Google 登入";
   if (site.open === false && !adm) {
     $("#stat").innerHTML = ""; $("#list").innerHTML = "";
@@ -46,7 +49,7 @@ function show(id) {
   cur = PROBLEMS.find(p => p.id === id); renderList();
   const s = subs[id];
   $("#view").innerHTML = `${note}
-    <h2>${cur.id}：${esc(cur.title)} <span class="lv lv${cur.level}">${LV[cur.level]}</span></h2>
+    <div class="ttl"><h2>${cur.id}：${esc(cur.title)} <span class="lv lv${cur.level}">${LV[cur.level]}</span></h2><button class="ans" id="ans">💡 參考答案</button></div>
     <small>時間限制 ${cur.limit / 1000} 秒　｜　共 ${cur.tests.length} 筆測資${s ? `　｜　你的紀錄：${s.solved ? "已通過" : "尚未通過"}，嘗試 ${s.tries || 1} 次` : ""}</small>
     <p>${esc(cur.desc)}</p>
     <b>輸入說明</b><div class="box">${esc(cur.inFmt)}</div>
@@ -55,14 +58,19 @@ function show(id) {
     <b>範例輸出</b><pre>${esc(cur.sample[1])}</pre>
     <div class="row"><select id="lang"><option value="py">Python 3</option><option value="js">JavaScript</option></select>
       <button class="p" id="go">提交</button><small id="hint"></small></div>
-    <textarea id="code" spellcheck="false"></textarea>
+    <div class="editor"><pre id="hl" aria-hidden="true"></pre><textarea id="code" spellcheck="false" wrap="off"></textarea></div>
     <div class="res" id="res"></div>`;
-  const ta = $("#code"), lg = $("#lang");
+  const ta = $("#code"), lg = $("#lang"), hl = $("#hl");
+  const paint = () => { hl.innerHTML = highlight(ta.value, lg.value) + "\n"; };
   if (s && s.lang) lg.value = s.lang;
   ta.value = (s && s.lang === lg.value && s.code) || TEMPLATE[lg.value];
-  lg.onchange = () => { ta.value = TEMPLATE[lg.value]; };
+  lg.onchange = () => { ta.value = TEMPLATE[lg.value]; paint(); };
+  ta.oninput = paint;
+  ta.onscroll = () => { hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft; };
   ta.onkeydown = e => { if (e.key === "Tab") { e.preventDefault(); document.execCommand("insertText", false, "    "); } };
+  paint();
   $("#go").onclick = submit;
+  $("#ans").onclick = askAnswer;
 }
 
 async function submit() {
@@ -90,3 +98,29 @@ async function submit() {
 }
 
 renderList(); show(cur.id);
+
+// ---- 參考答案：先跳出確認視窗，同意後才顯示解析與程式碼 ----
+const dlg = $("#dlg");
+dlg.onclick = e => { if (e.target === dlg) dlg.close(); };
+
+function askAnswer() {
+  dlg.innerHTML = `<div class="dc"><h3>🤔 要直接看參考答案嗎？</h3>
+    <p>先自己多試幾次，學得會更紮實。看完答案後，建議關掉再自己重新寫一次。</p>
+    <div class="row" style="justify-content:flex-end"><button id="no">再想想</button><button class="p" id="yes">我要看答案</button></div></div>`;
+  dlg.showModal();
+  $("#no").onclick = () => dlg.close();
+  $("#yes").onclick = showAnswer;
+}
+
+function showAnswer() {
+  const a = SOLUTIONS[cur.id];
+  dlg.innerHTML = a
+    ? `<div class="dc"><div class="ttl"><h3>${cur.id} ${esc(cur.title)}・參考答案</h3><button id="x">✕</button></div>
+       <h4>解析</h4><p>${esc(a.exp)}</p>
+       <h4>Python 參考程式碼</h4><pre class="code">${highlight(a.py, "py")}</pre>
+       <div class="row" style="justify-content:flex-end"><button id="cp">複製程式碼</button><button class="p" id="x2">關閉</button></div></div>`
+    : `<div class="dc"><h3>這題還沒有參考答案</h3><div class="row"><button class="p" id="x2">關閉</button></div></div>`;
+  dlg.querySelectorAll("#x,#x2").forEach(b => b.onclick = () => dlg.close());
+  const cp = $("#cp");
+  if (cp) cp.onclick = () => navigator.clipboard.writeText(a.py).then(() => { cp.textContent = "已複製 ✔"; });
+}
