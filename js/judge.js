@@ -1,7 +1,7 @@
 let W = null;
 const norm = s => s.replace(/\r/g, "").split("\n").map(l => l.trimEnd()).join("\n").trim();
 
-function runCase(lang, code, input, limit) {
+export function runCase(lang, code, input, limit) {
   return new Promise(res => {
     W = W || new Worker(new URL("./worker.js", import.meta.url));
     const w = W; let t;

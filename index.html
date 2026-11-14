@@ -12,11 +12,12 @@
   <b>🚀 MiniJudge</b>
   <div class="row" style="margin:0"><a id="adminLink" class="btn" href="admin.html" hidden>管理後台</a><span id="who" class="chip"></span><button id="theme" title="切換深淺色"></button><button id="auth">Google 登入</button></div>
 </header>
-<main>
-  <nav><div id="stat"></div><div id="list"></div></nav>
-  <section id="view"></section>
-</main>
-<dialog id="dlg"></dialog>
-<script type="module" src="js/app.js"></script>
+<div class="hero"><h1>從零開始學程式，邊學邊練</h1><p>先看教學弄懂觀念，再用測驗題檢查自己學會了沒</p></div>
+<div class="cards" id="cards">
+  <a class="big" href="learn.html"><div class="ic">📚</div><h2>教學</h2><p>由淺入深的 Python 單元，範例可以直接執行，每個單元最後都有建議練習的題目。</p><small id="n-lessons"></small></a>
+  <a class="big" href="judge.html"><div class="ic">🧪</div><h2>測驗</h2><p>線上評測題庫，直接在瀏覽器寫程式、提交，馬上知道 AC 或 WA。</p><small id="n-problems"></small></a>
+</div>
+<div id="closed" class="closed" hidden><div style="font-size:56px">🔧</div><h2>網站暫時關閉</h2><p></p><small>管理員請先登入。</small></div>
+<script type="module" src="js/home.js"></script>
 </body>
 </html>

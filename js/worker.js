@@ -16,6 +16,7 @@ onmessage = async e => {
       const ns = py.toPy({__name__: "__main__", __inp: input});
       py.runPython("import sys, io\nsys.stdin = io.StringIO(__inp)", {globals: ns});
       await py.runPythonAsync(code, {globals: ns});
+      py.runPython("import sys\nsys.stdout.flush()", {globals: ns});
     }
     postMessage({ok: true, out: out.join("\n")});
   } catch (err) { postMessage({ok: false, err: String(err)}); }

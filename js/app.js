@@ -12,7 +12,7 @@ const TEMPLATE = {
   py: "# 用 input() 讀取輸入，print() 輸出答案\n",
   js: "// 用 readline() 讀一行，print() 輸出答案\n"
 };
-let user = null, subs = {}, cur = PROBLEMS[0], note = "";
+let user = null, subs = {}, cur = PROBLEMS.find(p => p.id === location.hash.slice(1)) || PROBLEMS[0], note = "";
 
 $("#auth").onclick = async () => {
   try { user ? await logout() : await login(); }
@@ -46,7 +46,7 @@ function renderList() {
 }
 
 function show(id) {
-  cur = PROBLEMS.find(p => p.id === id); renderList();
+  cur = PROBLEMS.find(p => p.id === id); history.replaceState(null, "", "#" + id); renderList();
   const s = subs[id];
   $("#view").innerHTML = `${note}
     <div class="ttl"><h2>${cur.id}：${esc(cur.title)} <span class="lv lv${cur.level}">${LV[cur.level]}</span></h2><button class="ans" id="ans">💡 參考答案</button></div>

@@ -89,3 +89,34 @@ dialog::backdrop{background:#000a}
 .nt{text-align:center}
 .nt .row{justify-content:center}
 .btn.go{background:linear-gradient(90deg,#4f46e5,#0ea5e9);color:#fff;border:0;margin-top:8px}
+/* 首頁 */
+.hero{text-align:center;padding:48px 16px 8px}
+.hero h1{font-size:34px;margin:0 0 8px;color:var(--h)}
+.hero p{color:var(--mut);margin:0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;max-width:780px;margin:28px auto;padding:0 16px}
+a.big{display:block;text-decoration:none;color:var(--fg);background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:28px 24px;box-shadow:0 4px 18px var(--sh);transition:transform .2s,box-shadow .35s,border-color .35s,background-color .35s,color .35s}
+a.big:hover{transform:translateY(-4px);border-color:var(--ac)}
+a.big .ic{font-size:44px}
+a.big h2{margin:6px 0}
+a.big p{color:var(--mut)}
+/* 教學 */
+:root{--tip-bg:#0f3a2a;--tip-fg:#86efac}
+:root[data-theme=light]{--tip-bg:#dcfce7;--tip-fg:#166534}
+nav a{color:var(--fg);text-decoration:none}
+.un{font-weight:700;color:var(--h)}
+.lesson h3{color:var(--h);margin:26px 0 6px}
+p code,li code{background:var(--code);padding:1px 6px;border-radius:5px;font:13px ui-monospace,Menlo,monospace}
+.note{padding:8px 14px;border-radius:8px;margin:10px 0}
+.note ul{margin:4px 0}
+.note.tip{background:var(--tip-bg);color:var(--tip-fg)}
+.note.warn{background:var(--bn-bg);color:var(--bn-fg)}
+.cb{margin:12px 0}
+.cb pre{margin:4px 0}
+button.run{background:linear-gradient(90deg,#4f46e5,#0ea5e9);color:#fff;border:0;padding:5px 14px;margin:2px 0}
+pre.out{background:#0d0b1f;color:#e0e7ff;border-left-color:var(--ok);white-space:pre-wrap}
+.practice{margin-top:30px;padding:6px 20px 14px;border-radius:12px;border:2px dashed var(--ac)}
+.practice h4{margin:10px 0 4px}
+.pchip{display:inline-flex;gap:8px;align-items:center;padding:6px 12px;margin:4px 6px 4px 0;border:1px solid var(--bd);border-radius:10px;text-decoration:none;color:var(--fg);background:var(--code)}
+.pchip:hover{border-color:var(--ac)}
+.pid{font-weight:700;color:var(--h)}
+.pager{display:flex;justify-content:space-between;margin-top:22px}

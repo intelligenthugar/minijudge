@@ -3,6 +3,8 @@
 純前端的線上程式評測網站，類似 ZeroJudge。可直接放在 GitHub Pages，**沒有自己的伺服器**，登入與紀錄交給 Firebase。
 
 ## 功能
+- **首頁**（`index.html`）：選擇「📚 教學」或「🧪 測驗」
+- **教學**（`learn.html`）：10 個單元，由輸入輸出一路到遞迴與複雜度；範例程式可直接在頁面上執行；每個單元最後有「建議練習」的題目（必做 / 挑戰），登入後會顯示完成進度
 - 30 題題庫（簡單 / 中等 / 困難），每題 7～13 筆測資，含邊界值與大型隨機資料
 - 每題右上角有「💡 參考答案」按鈕：先跳出確認視窗，同意後顯示解析與有顏色的 Python 參考程式碼（可複製）
 - 程式碼編輯器與參考答案都有語法上色（Python / JavaScript）
@@ -15,19 +17,25 @@
 ## 檔案結構
 ```
 minijudge/
-├── index.html          前台
+├── index.html          首頁（選教學或測驗）
+├── learn.html          教學頁
+├── judge.html          測驗頁（題目與評測，可用 judge.html#a001 直接開題）
 ├── admin.html          後台（僅管理員）
 ├── README.md
 ├── fix.md              修改紀錄與不可破壞的規則
 ├── css/style.css       樣式（CSS 變數，深 / 淺色）
 ├── data/problems.js    題目與測資
 ├── data/solutions.js   每題的解析與 Python 參考程式碼
+├── data/lessons.js     教學單元與每單元的建議練習題
 └── js/
     ├── config.js       Firebase 設定（自己建立，不在 zip 內）
     ├── firebase.js     登入、讀寫紀錄、網站開關、管理員判定
     ├── judge.js        評測流程與判定
     ├── worker.js       在獨立執行緒執行使用者程式
-    ├── app.js          前台介面
+    ├── app.js          測驗頁介面
+    ├── learn.js        教學頁介面
+    ├── home.js         首頁
+    ├── shell.js        首頁 / 教學頁共用的登入與網站開關邏輯
     ├── admin.js        後台介面
     ├── highlight.js    語法上色
     ├── theme.js        深淺色切換
@@ -91,6 +99,9 @@ service cloud.firestore {
   }
 }
 ```
+
+## 新增教學單元
+編輯 `data/lessons.js`，格式見檔案開頭的說明。每個單元的 `practice.must / more` 要填 `problems.js` 裡存在的題號；範例程式請先在本機用 python3 跑過確認輸出正確。
 
 ## 新增題目
 編輯 `data/problems.js`，在 `RAW` 陣列加一題：

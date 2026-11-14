@@ -22,6 +22,9 @@
 16. 程式碼上色用自製的 `js/highlight.js`（不依賴外部套件）。編輯器是「透明 textarea 疊在 pre 上」，兩者的字型、padding、行高、tab-size 要完全一致，且要同步捲動；編輯器固定使用深色配色，參考答案的配色隨深 / 淺色模式變化。
 17. **不要用瀏覽器內建的 `alert()` / `confirm()`**（會顯示在畫面上方中間，很醜）。一律用 `js/ui.js` 的 `notice(訊息, 標題)` 或 `authError(e)`，它們會用置中的 `<dialog>` 顯示。
 18. 非管理員進入 `admin.html` 只顯示「你不是管理員」＋回到首頁按鈕，**不顯示 UID 或設定說明**（管理員已設定完成）。UID 到 Firebase Console → Authentication → Users 查。
+19. `index.html` 是首頁（選教學 / 測驗）；題目與評測頁是 `judge.html`（`app.js`）；教學頁是 `learn.html`（`learn.js` + `data/lessons.js`）。首頁與教學頁的登入 / 管理員 / 網站關閉判斷用 `js/shell.js` 的 `boot()`；網站關閉時三個前台頁都要顯示維護畫面。
+20. 教學單元 `practice` 的題號必須存在於 `problems.js`，且**每一題至少被一個單元推薦**（新增題目時要補進某個單元）。教學範例程式必須用 python3 實際跑過、輸出正確。
+21. 題目頁支援網址 `judge.html#題號` 直接開啟該題（教學頁的推薦題連結依賴這個）。`worker.js` 在 Python 執行完要 `sys.stdout.flush()`，否則結尾沒換行的輸出會遺失。
 
 ## 修改紀錄
 
@@ -97,3 +100,11 @@
   - `admin.js`：非管理員畫面改成置中的「🚫 你不是管理員」＋「回到首頁」按鈕，移除 UID 與設定說明；未登入改為置中的「請先登入」。
   - `ui.js` 新增 `notice()`、`authError()`（置中 dialog）；`app.js`、`admin.js` 的所有 `alert()` 都換掉；使用者自己關掉登入視窗不再跳錯誤。
   - `README.md` 的管理員設定步驟改成「到 Authentication → Users 查 UID」。
+
+### 15. 首頁、教學單元、每單元建議練習題
+- 需求：網站不只測驗，還要有教學（參考 APCS 先修班網站）；每個單元教完後建議做哪些題目；index.html 變成首頁（選教學或測驗），原本的程式碼變成新的 html。
+- 做法：
+  - 原本的 `index.html` → `judge.html`（加上「首頁」「📚 教學」按鈕，支援 `#題號`）；新的 `index.html` 是首頁，兩張大卡片：📚 教學、🧪 測驗。
+  - 新增 `learn.html`、`js/learn.js`、`data/lessons.js`：10 個單元（輸入輸出與變數、運算子與條件判斷、迴圈、串列與輸入技巧、字串、函式與數學小演算法、陣列掃描與雙層迴圈、二維串列、堆疊與遞迴、複雜度與除錯），共 45 個範例，可在頁面上按「▶ 執行」。
+  - 每單元結尾有「建議接著做這些題目」：必做 + 挑戰，30 題全部都有被推薦；登入後顯示已通過的 ✔ 與單元完成進度。
+  - 新增 `js/shell.js`、`js/home.js`；`judge.js` 匯出 `runCase` 供教學範例使用；`worker.js` 結尾補 `stdout.flush()`。
