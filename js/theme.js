@@ -6,6 +6,12 @@
   function set(t) { r.setAttribute("data-theme", t); try { localStorage.setItem(k, t); } catch (e) {} label(t); }
   r.setAttribute("data-theme", get());
   document.addEventListener("DOMContentLoaded", function () {
+    var hd = document.querySelector("header");
+    if (hd) {
+      var hh = function () { r.style.setProperty("--hh", hd.offsetHeight + "px"); };
+      hh();
+      if (window.ResizeObserver) new ResizeObserver(hh).observe(hd);
+    }
     var b = document.getElementById("theme");
     if (!b) return;
     label(get());

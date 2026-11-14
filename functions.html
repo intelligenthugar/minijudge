@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MiniJudge 函式對照表</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="js/theme.js"></script>
+</head>
+<body>
+<header>
+  <b>📖 函式對照表</b>
+  <div class="row" style="margin:0"><a class="btn" href="index.html">首頁</a><a class="btn" href="learn.html">📚 教學</a><a class="btn" href="judge.html">🧪 測驗</a><a id="adminLink" class="btn" href="admin.html" hidden>管理後台</a><span id="who" class="chip"></span><button id="theme" title="切換深淺色"></button><button id="auth">Google 登入</button></div>
+</header>
+<div id="fwrap" class="fwrap">
+  <div class="hero"><h1>函式與語法對照表</h1><p>每個範例都實際執行過，右邊的結果就是真的印出來的內容。<span id="count"></span></p></div>
+  <input id="q" type="search" placeholder="搜尋函式或用途，例如：排序、split、lambda">
+  <div id="chips"></div>
+  <div id="tables"></div>
+  <p id="none" class="hero" hidden>找不到符合的函式，換個關鍵字試試。</p>
+</div>
+<div id="closed" class="closed" hidden><div style="font-size:56px">🔧</div><h2>網站暫時關閉</h2><p></p><small>管理員請先登入。</small></div>
+<script type="module" src="js/functions.js"></script>
+</body>
+</html>

@@ -4,6 +4,7 @@ import {judge} from "./judge.js";
 import {SOLUTIONS} from "../data/solutions.js";
 import {highlight} from "./highlight.js";
 import {setWho, authError} from "./ui.js";
+import {isClosed, closedMsg, problemClosed, showAnnounce} from "./site.js";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"}[c]));
@@ -12,7 +13,7 @@ const TEMPLATE = {
   py: "# 用 input() 讀取輸入，print() 輸出答案\n",
   js: "// 用 readline() 讀一行，print() 輸出答案\n"
 };
-let user = null, subs = {}, cur = PROBLEMS.find(p => p.id === location.hash.slice(1)) || PROBLEMS[0], note = "";
+let user = null, subs = {}, cur = PROBLEMS.find(p => p.id === location.hash.slice(1)) || PROBLEMS[0], note = "", site = {}, isAdm = false;
 
 $("#auth").onclick = async () => {
   try { user ? await logout() : await login(); }
@@ -20,17 +21,19 @@ $("#auth").onclick = async () => {
 };
 onUser(async u => {
   user = u; subs = u ? await loadSubs(u.uid) : {};
-  const adm = u ? await isAdmin(u.uid) : false, site = await getSite();
+  const adm = u ? await isAdmin(u.uid) : false;
+  site = await getSite(); isAdm = adm;
+  showAnnounce(site);
   $("#adminLink").hidden = !adm;
   setWho(u, adm);
   $("#auth").textContent = u ? "登出" : "Google 登入";
-  if (site.open === false && !adm) {
+  if (isClosed(site) && !adm) {
     $("#stat").innerHTML = ""; $("#list").innerHTML = "";
     $("#view").innerHTML = `<div class="closed"><div style="font-size:56px">🔧</div><h2>網站暫時關閉</h2>
-      <p>${esc(site.message || "請稍後再回來。")}</p><small>管理員請先登入。</small></div>`;
+      <p>${esc(closedMsg(site))}</p><small>管理員請先登入。</small></div>`;
     return;
   }
-  note = site.open === false ? '<div class="banner">網站目前對一般使用者關閉（你是管理員，仍可使用）</div>' : "";
+  note = isClosed(site) ? '<div class="banner">網站目前對一般使用者關閉（你是管理員，仍可使用）</div>' : "";
   renderList(); show(cur.id);
 });
 
@@ -40,7 +43,7 @@ function renderList() {
   $("#list").innerHTML = PROBLEMS.map(p => {
     const s = subs[p.id];
     const m = s ? (s.solved ? '<span class="ac">✔</span>' : '<span class="wa">✘</span>') : "";
-    return `<a data-id="${p.id}" class="${p.id === cur.id ? "on" : ""}"><span>${p.id} ${esc(p.title)}</span><span><span class="lv lv${p.level}">${LV[p.level]}</span> ${m}</span></a>`;
+    return `<a data-id="${p.id}" class="${p.id === cur.id ? "on" : ""}${problemClosed(site, p.id) ? " off" : ""}"><span>${p.id} ${esc(p.title)}</span><span><span class="lv lv${p.level}">${LV[p.level]}</span> ${problemClosed(site, p.id) ? "🔒" : m}</span></a>`;
   }).join("");
   document.querySelectorAll("#list a").forEach(a => a.onclick = () => show(a.dataset.id));
 }
@@ -48,7 +51,13 @@ function renderList() {
 function show(id) {
   cur = PROBLEMS.find(p => p.id === id); history.replaceState(null, "", "#" + id); renderList();
   const s = subs[id];
-  $("#view").innerHTML = `${note}
+  const shut = problemClosed(site, id);
+  if (shut && !isAdm) {
+    $("#view").innerHTML = `${note}<div class="closed"><div style="font-size:56px">🛠️</div><h2>${cur.id}：${esc(cur.title)}</h2><p>這一題目前暫時關閉（維修中），請先做其他題目。</p></div>`;
+    return;
+  }
+  const warn = shut ? '<div class="banner">這一題對一般使用者關閉中（你是管理員，仍可使用）</div>' : "";
+  $("#view").innerHTML = `${note}${warn}
     <div class="ttl"><h2>${cur.id}：${esc(cur.title)} <span class="lv lv${cur.level}">${LV[cur.level]}</span></h2><button class="ans" id="ans">💡 參考答案</button></div>
     <small>時間限制 ${cur.limit / 1000} 秒　｜　共 ${cur.tests.length} 筆測資${s ? `　｜　你的紀錄：${s.solved ? "已通過" : "尚未通過"}，嘗試 ${s.tries || 1} 次` : ""}</small>
     <p>${esc(cur.desc)}</p>
@@ -73,14 +82,31 @@ function show(id) {
   $("#ans").onclick = askAnswer;
 }
 
+// 失敗的測資：顯示輸入、期望輸出、你的輸出（太長會截斷）
+const cut = (s, n = 400) => { s = String(s == null ? "" : s); return s.length > n ? s.slice(0, n) + `…（共 ${s.length} 字元，只顯示前 ${n} 個）` : s; };
+const lines = s => String(s == null ? "" : s).replace(/\r/g, "").split("\n").map(l => l.trimEnd());
+function firstDiff(exp, got) {
+  const a = lines(exp), b = lines(got), n = Math.max(a.length, b.length);
+  for (let k = 0; k < n; k++) if ((a[k] || "") !== (b[k] || "")) return k + 1;
+  return 0;
+}
+function detail(v, info) {
+  if (v === "AC" || !info) return "";
+  const k = v === "WA" ? firstDiff(info.expected, info.got) : 0;
+  const head = v === "WA" ? (k ? `從第 ${k} 行開始不同` : "輸出內容不同") : "這筆測資";
+  return `<details><summary>${head}：看輸入與輸出</summary><b>輸入</b><pre>${esc(cut(info.input))}</pre>` +
+    `<b>期望輸出</b><pre>${esc(cut(info.expected))}</pre>` +
+    (v === "WA" ? `<b>你的輸出</b><pre>${esc(cut(info.got))}</pre>` : "") + `</details>`;
+}
+
 async function submit() {
   const lang = $("#lang").value, code = $("#code").value, res = $("#res"), btn = $("#go");
   btn.disabled = true; res.innerHTML = "";
   $("#hint").textContent = lang === "py" ? "首次執行 Python 需載入環境，請稍候…" : "";
-  const r = await judge(lang, code, cur.tests, cur.limit, (i, v, err) => {
+  const r = await judge(lang, code, cur.tests, cur.limit, (i, v, err, info) => {
     const d = document.createElement("div");
     d.innerHTML = `測資 ${i + 1}：<span class="v-${v}">${v}</span>` +
-      (err ? ` <small>${esc(err.split("\n").slice(-2).join(" "))}</small>` : "");
+      (err ? ` <small>${esc(err.split("\n").slice(-2).join(" "))}</small>` : "") + detail(v, info);
     res.appendChild(d);
   });
   $("#hint").textContent = ""; btn.disabled = false;

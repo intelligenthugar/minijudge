@@ -25,6 +25,12 @@
 19. `index.html` 是首頁（選教學 / 測驗）；題目與評測頁是 `judge.html`（`app.js`）；教學頁是 `learn.html`（`learn.js` + `data/lessons.js`）。首頁與教學頁的登入 / 管理員 / 網站關閉判斷用 `js/shell.js` 的 `boot()`；網站關閉時三個前台頁都要顯示維護畫面。
 20. 教學單元 `practice` 的題號必須存在於 `problems.js`，且**每一題至少被一個單元推薦**（新增題目時要補進某個單元）。教學範例程式必須用 python3 實際跑過、輸出正確。
 21. 題目頁支援網址 `judge.html#題號` 直接開啟該題（教學頁的推薦題連結依賴這個）。`worker.js` 在 Python 執行完要 `sys.stdout.flush()`，否則結尾沒換行的輸出會遺失。
+22. 測驗頁與教學頁（`<body class="app">`）的左側清單是**固定在頂欄下方、自己獨立捲動**的（`position:sticky` + 高度 `100vh - --hh`；`--hh` 由 `theme.js` 量測頂欄高度）。捲軸一律細且低調：全站 `scrollbar-width:thin`，側欄的捲軸平常透明、滑鼠移上去才顯示。手機版（≤700px）側欄不固定。新增頁面如果有側欄，記得加 `class="app"`。
+23. 網站狀態、公告、課程與題目開關**全部存在同一份文件** `config/site`（一次頁面載入只讀一次）：`open`、`message`、`closeFrom`、`closeUntil`（毫秒時間戳記，null 代表沒有）、`announce {on,text,level,id}`、`closedLessons[]`、`closedProblems[]`。判斷邏輯集中在 `js/site.js`，不要在各頁面自己寫。
+24. 關閉的單元 / 題目：一般使用者看到「維修中」畫面、清單灰掉並顯示 🔒；管理員仍可進入並看到提示。Firestore 規則（README）要同步檢查 `closedNow`、`siteOpen`、`problemOpen`，修改欄位時規則一起改。新增任何前台頁面，都要呼叫 `showAnnounce(site)` 與關閉判斷（用 `shell.js` 的 `boot()` 即可）。
+25. 函式對照表的資料 `data/functions.js` 是**產生出來的**：修改 `tools/build_functions.py` 後重新執行，「執行結果」由 python3 實際跑出來，不要手寫。每筆要填對應的教學單元（`unit`）。
+26. 教學單元 6 有 lambda 的三個小節（基本用法、`key=lambda` 排序 / 搜尋、搭配 `map` / `filter`）；函式對照表也有 lambda 相關條目，修改教學時不要刪掉。
+27. 提交後沒通過的測資，要能展開看輸入、期望輸出、你的輸出（`app.js` 的 `detail()`）。測資本來就公開在前端，所以不特別隱藏。
 
 ## 修改紀錄
 
@@ -108,3 +114,22 @@
   - 新增 `learn.html`、`js/learn.js`、`data/lessons.js`：10 個單元（輸入輸出與變數、運算子與條件判斷、迴圈、串列與輸入技巧、字串、函式與數學小演算法、陣列掃描與雙層迴圈、二維串列、堆疊與遞迴、複雜度與除錯），共 45 個範例，可在頁面上按「▶ 執行」。
   - 每單元結尾有「建議接著做這些題目」：必做 + 挑戰，30 題全部都有被推薦；登入後顯示已通過的 ✔ 與單元完成進度。
   - 新增 `js/shell.js`、`js/home.js`；`judge.js` 匯出 `runCase` 供教學範例使用；`worker.js` 結尾補 `stdout.flush()`。
+
+### 16. 題目清單獨立捲動、捲軸變細
+- 需求：測驗旁邊那一欄題目要可以單獨滑動，且不要出現很醜的捲軸。
+- 做法：`judge.html`、`learn.html` 加上 `body.app`；頂欄固定在最上面，左側清單用 sticky 貼在頂欄下方、高度為視窗剩餘空間、內容多時自己捲動；全站捲軸改成細版，側欄捲軸平常隱藏、滑鼠移上去才出現；手機版維持原本的上下排列。`theme.js` 新增頂欄高度量測（`--hh`）。
+
+### 17. 後台擴充：課程 / 題目開關、計時 / 定時關閉、公告
+- 需求：後台可以控制哪些課程可讀、哪些題目可做（有人回報 bug 先關起來）；關閉網站可以計時關閉或定時關閉；可以設定公告。
+- 做法：
+  - `admin.html` 改成四個分頁：網站狀態（手動、計時、定時）、公告、課程、題目；開關用切換鈕、題目可搜尋。
+  - 新增 `js/site.js`（`isClosed`、`lessonClosed`、`problemClosed`、`closedMsg`、`showAnnounce`）；`app.js`、`learn.js`、`shell.js`、`home.js` 都改用它。
+  - 關閉的題目 / 單元：清單灰掉 + 🔒，點進去顯示維修中；管理員可繞過並看到提示。
+  - **Firestore 規則已更新**（README）：新增 `closedNow`、`problemOpen`，一般使用者無法對被關閉的題目、或關閉期間寫入紀錄。使用者需要重新發布規則。
+
+### 18. 函式對照表、lambda、失敗測資顯示輸入輸出
+- 需求：測資錯誤時要給輸入輸出；也要一個函式對照表（參考 APCS 先修班的函式統整表）；把很酷的 lambda 寫進去。
+- 做法：
+  - `judge.js` 把每筆測資的輸入、期望輸出、你的輸出傳給 `app.js`；沒通過的測資可展開查看，WA 會標出從第幾行開始不同，太長會截斷。
+  - 新增 `functions.html`、`js/functions.js`、`data/functions.js`、`tools/build_functions.py`：118 個函式與語法，10 個分類，可搜尋、有分類跳轉、每個範例附真實執行結果與對應教學單元。內容與範例是自己寫的，不是複製參考網站。首頁加了第三張卡片，教學頁與測驗頁的頂欄加了「📖 函式表」。
+  - 教學單元 6 新增三個 lambda 小節（共 3 個範例區塊），並更新學習目標。

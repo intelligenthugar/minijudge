@@ -3,23 +3,24 @@ import {PROBLEMS} from "../data/problems.js";
 import {highlight} from "./highlight.js";
 import {runCase} from "./judge.js";
 import {boot} from "./shell.js";
+import {closedMsg, lessonClosed, problemClosed} from "./site.js";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"}[c]));
 const fmt = s => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
 const LV = ["", "簡單", "中等", "困難"];
 const byId = Object.fromEntries(PROBLEMS.map(p => [p.id, p]));
-let state = {closed: false, subs: {}, user: null, site: {}}, CODES = [];
+let state = {closed: false, admin: false, subs: {}, user: null, site: {}}, CODES = [];
 
 const solved = id => !!(state.subs[id] && state.subs[id].solved);
-const unitDone = l => l.practice.must.length > 0 && l.practice.must.every(solved);
+const unitDone = l => { const m = l.practice.must.filter(id => !problemClosed(state.site, id)); return m.length > 0 && m.every(solved); };
 
 boot(s => { state = s; render(); }, {subs: true});
 window.onhashchange = render;
 
 function chip(id) {
   const p = byId[id];
-  return `<a class="pchip" href="judge.html#${id}"><span class="pid">${id}</span>${esc(p.title)}<span class="lv lv${p.level}">${LV[p.level]}</span>${solved(id) ? '<span class="ac">✔</span>' : ""}</a>`;
+  return `<a class="pchip" href="judge.html#${id}"><span class="pid">${id}</span>${esc(p.title)}<span class="lv lv${p.level}">${LV[p.level]}</span>${problemClosed(state.site, id) ? "🔒" : solved(id) ? '<span class="ac">✔</span>' : ""}</a>`;
 }
 function codeBlock(c) {
   const k = CODES.push(c) - 1;
@@ -48,18 +49,23 @@ function renderNav(cur) {
     ? `已完成 <b>${done}</b> / ${LESSONS.length} 單元<div class="bar"><i style="width:${done / LESSONS.length * 100}%"></i></div><small>必做題全部通過才算完成</small>`
     : "<small>登入後可記錄學習進度</small>";
   $("#list").innerHTML = LESSONS.map((l, i) =>
-    `<a class="${i === cur ? "on" : ""}" href="#${l.id}"><span><span class="un">${i + 1}</span>　${esc(l.title)}</span>${unitDone(l) ? '<span class="ac">✔</span>' : ""}</a>`).join("");
+    `<a class="${i === cur ? "on" : ""}${lessonClosed(state.site, l.id) ? " off" : ""}" href="#${l.id}"><span><span class="un">${i + 1}</span>　${esc(l.title)}</span>${lessonClosed(state.site, l.id) ? "🔒" : unitDone(l) ? '<span class="ac">✔</span>' : ""}</a>`).join("");
 }
 function render() {
   if (state.closed) {
     $("#stat").innerHTML = ""; $("#list").innerHTML = "";
-    $("#view").innerHTML = `<div class="closed"><div style="font-size:56px">🔧</div><h2>網站暫時關閉</h2><p>${esc(state.site.message || "請稍後再回來。")}</p></div>`;
+    $("#view").innerHTML = `<div class="closed"><div style="font-size:56px">🔧</div><h2>網站暫時關閉</h2><p>${esc(closedMsg(state.site))}</p></div>`;
     return;
   }
   CODES = [];
   const i = Math.max(0, LESSONS.findIndex(l => l.id === location.hash.slice(1))), l = LESSONS[i];
   renderNav(i);
-  $("#view").innerHTML = `<div class="lesson"><small>單元 ${i + 1} / ${LESSONS.length}</small>
+  const shut = lessonClosed(state.site, l.id);
+  if (shut && !state.admin) {
+    $("#view").innerHTML = `<div class="closed"><div style="font-size:56px">🛠️</div><h2>單元 ${i + 1}：${esc(l.title)}</h2><p>這個單元目前暫時關閉（維修中），請先看其他單元。</p></div>`;
+    return;
+  }
+  $("#view").innerHTML = `<div class="lesson">${shut ? '<div class="banner">這個單元對一般使用者關閉中（你是管理員，仍可閱讀）</div>' : ""}<small>單元 ${i + 1} / ${LESSONS.length}</small>
     <h2>${esc(l.title)}</h2><p>${fmt(l.sub)}</p>
     <div class="note tip"><b>本單元學會</b><ul>${l.goal.map(g => `<li>${fmt(g)}</li>`).join("")}</ul></div>
     ${l.sections.map(sec).join("")}

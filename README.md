@@ -3,6 +3,8 @@
 純前端的線上程式評測網站，類似 ZeroJudge。可直接放在 GitHub Pages，**沒有自己的伺服器**，登入與紀錄交給 Firebase。
 
 ## 功能
+- **函式對照表**（`functions.html`）：118 個常用函式與語法，分 10 類，可搜尋；每個範例都附上真正執行出來的結果，並連到對應的教學單元
+- 提交後，沒通過的測資可以展開看「輸入、期望輸出、你的輸出」（WA 會標出從第幾行開始不同）
 - **首頁**（`index.html`）：選擇「📚 教學」或「🧪 測驗」
 - **教學**（`learn.html`）：10 個單元，由輸入輸出一路到遞迴與複雜度；範例程式可直接在頁面上執行；每個單元最後有「建議練習」的題目（必做 / 挑戰），登入後會顯示完成進度
 - 30 題題庫（簡單 / 中等 / 困難），每題 7～13 筆測資，含邊界值與大型隨機資料
@@ -11,7 +13,10 @@
 - 支援 **Python 3**（Pyodide）與 **JavaScript**，程式在瀏覽器的 Web Worker 內評測
 - 判定：AC、WA、TLE、RE
 - Google 登入，個人解題紀錄（通過與否、嘗試次數、最後提交的程式碼）存在 Firestore
-- 後台 `admin.html`：管理員可開啟 / 關閉網站，並設定關閉時顯示的訊息
+- 後台 `admin.html`（僅管理員）：
+  - **網站狀態**：手動開放 / 關閉、**計時關閉**（關 N 分鐘後自動恢復）、**定時關閉**（排定開始與結束時間）、自訂關閉訊息
+  - **公告**：顯示在所有前台頁面最上方（一般 / 注意 / 緊急三種顏色），使用者可自己關掉
+  - **課程**、**題目**：可個別關閉有 bug 的單元或題目（使用者看到「維修中」，管理員仍可使用）
 - 深色模式（預設）與淺色模式，可切換，選擇會被記住
 
 ## 檔案結構
@@ -19,6 +24,7 @@
 minijudge/
 ├── index.html          首頁（選教學或測驗）
 ├── learn.html          教學頁
+├── functions.html      函式對照表
 ├── judge.html          測驗頁（題目與評測，可用 judge.html#a001 直接開題）
 ├── admin.html          後台（僅管理員）
 ├── README.md
@@ -26,6 +32,7 @@ minijudge/
 ├── css/style.css       樣式（CSS 變數，深 / 淺色）
 ├── data/problems.js    題目與測資
 ├── data/solutions.js   每題的解析與 Python 參考程式碼
+├── data/functions.js   函式對照表資料（由 tools/build_functions.py 產生）
 ├── data/lessons.js     教學單元與每單元的建議練習題
 └── js/
     ├── config.js       Firebase 設定（自己建立，不在 zip 內）
@@ -33,8 +40,10 @@ minijudge/
     ├── judge.js        評測流程與判定
     ├── worker.js       在獨立執行緒執行使用者程式
     ├── app.js          測驗頁介面
+    ├── functions.js    函式對照表頁面
     ├── learn.js        教學頁介面
     ├── home.js         首頁
+    ├── site.js         網站狀態 / 公告 / 課程題目開關的共用判斷
     ├── shell.js        首頁 / 教學頁共用的登入與網站開關邏輯
     ├── admin.js        後台介面
     ├── highlight.js    語法上色
@@ -79,9 +88,20 @@ service cloud.firestore {
       return request.auth != null &&
         exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
+    // 手動關閉，或現在落在計時 / 定時關閉的區間內
+    function closedNow(s) {
+      let now = request.time.toMillis();
+      return s.get('open', true) == false ||
+        (s.get('closeFrom', null) != null && now >= s.closeFrom &&
+         (s.get('closeUntil', null) == null || now < s.closeUntil));
+    }
     function siteOpen() {
       let p = /databases/$(database)/documents/config/site;
-      return !exists(p) || get(p).data.open != false;
+      return !exists(p) || !closedNow(get(p).data);
+    }
+    function problemOpen(pid) {
+      let p = /databases/$(database)/documents/config/site;
+      return !exists(p) || !(pid in get(p).data.get('closedProblems', []));
     }
 
     match /config/{doc} {
@@ -94,11 +114,14 @@ service cloud.firestore {
     match /users/{uid}/subs/{pid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow write: if request.auth != null && request.auth.uid == uid
-                   && (siteOpen() || isAdmin());
+                   && ((siteOpen() && problemOpen(pid)) || isAdmin());
     }
   }
 }
 ```
+
+## 新增或修改函式對照表
+編輯 `tools/build_functions.py` 裡的 `add(...)` 清單，再執行 `python tools/build_functions.py`，會用 python3 實際跑每個範例、把結果寫進 `data/functions.js`（不要手改那個檔案）。
 
 ## 新增教學單元
 編輯 `data/lessons.js`，格式見檔案開頭的說明。每個單元的 `practice.must / more` 要填 `problems.js` 裡存在的題號；範例程式請先在本機用 python3 跑過確認輸出正確。
@@ -122,6 +145,6 @@ py -m http.server 8000
 
 ## 限制
 - 沒有後台伺服器，**測資公開在前端原始碼**，且紀錄由使用者端回報，可被偽造，不適合做正式比賽或可信的排行榜。
-- 網站「關閉」是前端畫面攔截 + Firestore 規則禁止一般使用者寫入；靜態檔案本身仍是公開的。
+- 網站、單元、題目的「關閉」是前端畫面攔截 + Firestore 規則禁止一般使用者寫入紀錄；靜態檔案本身仍是公開的。計時 / 定時關閉在使用者載入頁面時判斷，已經開著頁面的人要重新整理才會看到變化，也依賴使用者電腦的時鐘（Firestore 規則則用伺服器時間）。
 - 不支援 C / C++（瀏覽器端編譯器檔案太大）。
 - 後台不提供編輯題目：題目請直接改 `data/problems.js` 後 push，有版本紀錄也較安全。

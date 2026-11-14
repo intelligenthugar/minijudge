@@ -181,8 +181,8 @@ print(cnt)`}]}
  ],
  practice: {must: ["a003", "a011", "a007", "a013"], more: ["a016", "a023", "a028"], tip: "字串題先想：要走過每個字元嗎？要反轉嗎？再選工具。凱薩密碼注意 z 之後要接回 a。"}},
 
-{id: "u06", title: "函式與數學小演算法", sub: "把重複的步驟包起來，並學會幾個經典數學技巧。",
- goal: ["會定義與呼叫函式", "會判斷質數、做質因數分解", "會用輾轉相除法與進位轉換"],
+{id: "u06", title: "函式與數學小演算法", sub: "把重複的步驟包起來、用 lambda 寫一行小函式，並學會幾個經典數學技巧。",
+ goal: ["會定義與呼叫函式", "會用 lambda 寫一行小函式，搭配 sorted / max / map / filter", "會判斷質數、做質因數分解", "會用輾轉相除法與進位轉換"],
  sections: [
   {h: "定義函式", p: ["`def` 定義函式，`return` 回傳結果。函式必須先定義才能呼叫。"],
    code: [{c: `def add(a, b):
@@ -193,6 +193,27 @@ def is_even(n):
 
 print(add(3, 4))
 print(is_even(10), is_even(7))`}]},
+  {h: "lambda：一行的小函式", p: ["`lambda 參數: 運算式` 可以不用 `def`，直接寫出一個小函式，結果就是那個運算式的值。適合只用一次、很短的函式。"],
+   code: [{c: `square = lambda x: x * x
+add = lambda a, b: a + b
+print(square(5))
+print(add(3, 4))`}],
+   tip: "`lambda x: x * x` 等於 `def f(x): return x * x`，只是沒有名字，而且只能寫「一個運算式」。需要多行時還是用 `def`。"},
+  {h: "lambda 最常見的用途：自訂排序與搜尋規則", p: ["`sorted()`、`max()`、`min()` 都有 `key=` 參數，告訴它「用什麼來比較」，這時候就是 lambda 派上用場的地方。"],
+   code: [{c: `words = ["banana", "kiwi", "apple"]
+print(sorted(words, key=lambda w: len(w)))
+print(max(words, key=lambda w: w[-1]))
+
+pts = [(1, 9), (3, 2), (2, 5)]
+print(sorted(pts, key=lambda p: p[1]))`}, {c: `data = [("Amy", 80), ("Bob", 95), ("Cat", 80)]
+data.sort(key=lambda s: (-s[1], s[0]))
+print(data)`}],
+   tip: "第二個範例很酷：`key` 回傳一組 `(-分數, 名字)`，就能做到「分數高的排前面，同分再依名字排」。分數加負號，是為了讓大的排前面。"},
+  {h: "lambda 搭配 map 與 filter", p: ["`map(f, a)` 把 `f` 套用在每個元素上；`filter(f, a)` 只留下讓 `f` 回傳 True 的元素。"],
+   code: [{c: `nums = [1, 2, 3, 4, 5, 6]
+print(list(map(lambda x: x * x, nums)))
+print(list(filter(lambda x: x % 2 == 0, nums)))`}],
+   warn: "lambda 寫太長會很難讀。條件一多、或要重複使用，就改用 `def` 取一個好懂的名字。"},
   {h: "質數判斷：只需要試到 √n", p: ["如果 n 有因數，一定有一個因數 ≤ √n。所以只要檢查 2 到 √n，次數從 n 次降到約 √n 次。"],
    code: [{c: `def is_prime(n):
     if n < 2:

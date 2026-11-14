@@ -24,7 +24,7 @@ export async function judge(lang, code, tests, limit, onCase) {
     let v = r.v;
     if (v === "OK") v = norm(r.out) === norm(exp) ? "AC" : "WA";
     if (v === "AC") passed++; else if (!first) first = v;
-    onCase(i, v, r.err);
+    onCase(i, v, r.err, {input: inp, expected: exp, got: r.out});
   }
   return {passed, total: tests.length, first, solved: passed === tests.length};
 }

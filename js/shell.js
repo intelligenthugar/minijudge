@@ -1,6 +1,7 @@
 // 首頁與教學頁共用：登入 / 登出、名稱方框、管理後台按鈕、網站關閉判斷
 import {onUser, login, logout, getSite, isAdmin, loadSubs} from "./firebase.js";
 import {setWho, authError} from "./ui.js";
+import {isClosed, showAnnounce} from "./site.js";
 
 export function boot(cb, {subs = false} = {}) {
   const auth = document.getElementById("auth");
@@ -13,6 +14,7 @@ export function boot(cb, {subs = false} = {}) {
     if (al) al.hidden = !adm;
     setWho(u, adm);
     auth.textContent = u ? "登出" : "Google 登入";
-    cb({user: u, admin: adm, site, closed: site.open === false && !adm, subs: u && subs ? await loadSubs(u.uid) : {}});
+    showAnnounce(site);
+    cb({user: u, admin: adm, site, closed: isClosed(site) && !adm, subs: u && subs ? await loadSubs(u.uid) : {}});
   });
 }
