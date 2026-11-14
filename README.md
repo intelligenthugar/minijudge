@@ -1,1 +1,111 @@
-# minijudge
+# MiniJudge
+
+純前端的線上程式評測網站，類似 ZeroJudge。可直接放在 GitHub Pages，**沒有自己的伺服器**，登入與紀錄交給 Firebase。
+
+## 功能
+- 20 題題庫（簡單 / 中等 / 困難），每題 7～13 筆測資，含邊界值與大型隨機資料
+- 支援 **Python 3**（Pyodide）與 **JavaScript**，程式在瀏覽器的 Web Worker 內評測
+- 判定：AC、WA、TLE、RE
+- Google 登入，個人解題紀錄（通過與否、嘗試次數、最後提交的程式碼）存在 Firestore
+- 後台 `admin.html`：管理員可開啟 / 關閉網站，並設定關閉時顯示的訊息
+- 深色模式（預設）與淺色模式，可切換，選擇會被記住
+
+## 檔案結構
+```
+minijudge/
+├── index.html          前台
+├── admin.html          後台（僅管理員）
+├── README.md
+├── fix.md              修改紀錄與不可破壞的規則
+├── css/style.css       樣式（CSS 變數，深 / 淺色）
+├── data/problems.js    題目與測資
+└── js/
+    ├── config.js       Firebase 設定（自己建立，不在 zip 內）
+    ├── firebase.js     登入、讀寫紀錄、網站開關、管理員判定
+    ├── judge.js        評測流程與判定
+    ├── worker.js       在獨立執行緒執行使用者程式
+    ├── app.js          前台介面
+    ├── admin.js        後台介面
+    └── theme.js        深淺色切換
+```
+
+## 部署步驟
+### 1. Firebase
+1. 到 [Firebase Console](https://console.firebase.google.com) 建立專案。
+2. **Authentication** → 開始使用 → Sign-in method → 啟用 **Google**。
+3. Authentication → 設定 → **已授權網域**，加入 `你的帳號.github.io`（本機測試再加 `localhost`）。
+4. **Firestore Database** → 建立資料庫（位置建議 `asia-east1`，模式選「正式版模式」）。
+5. Firestore → **規則**，貼上下方規則並發布。
+6. 專案設定（左上角齒輪）→ 一般 → 你的應用程式 → 新增 Web 應用程式（`</>`），取得 `firebaseConfig`。
+
+### 2. config.js
+建立 `js/config.js`，**只放設定物件**，不要貼 Firebase 官方範例裡的 `import ... from "firebase/app"`：
+```js
+export const firebaseConfig = {
+  apiKey: "...",
+  authDomain: "...firebaseapp.com",
+  projectId: "...",
+  appId: "..."
+};
+```
+
+### 3. GitHub Pages
+把整個專案推到 GitHub repo，Settings → Pages 選分支與根目錄。更新後用 **Ctrl+F5** 強制重新整理。
+
+### 4. 設定管理員
+1. 用要當管理員的帳號登入 `admin.html`，頁面會顯示你的 UID。
+2. Firestore → 開始集合（Start collection），集合 ID `admins`，**文件 ID 貼上 UID**，欄位任意（例如 `role` = `admin`）。
+3. 重新整理 `admin.html`。每位管理員各建一份文件。
+
+## Firestore 規則
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    function siteOpen() {
+      let p = /databases/$(database)/documents/config/site;
+      return !exists(p) || get(p).data.open != false;
+    }
+
+    match /config/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+    }
+    match /users/{uid}/subs/{pid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null && request.auth.uid == uid
+                   && (siteOpen() || isAdmin());
+    }
+  }
+}
+```
+
+## 新增題目
+編輯 `data/problems.js`，在 `RAW` 陣列加一題：
+```js
+{id: "a021", title: "題目名稱", limit: 2000,
+ desc: "題目敘述", inFmt: "輸入說明", outFmt: "輸出說明",
+ ref: s => /* 參考解：輸入字串 → 答案字串 */,
+ inputs: ["測資輸入1", "測資輸入2", ...]}
+```
+標準答案由 `ref` 自動算出。難度在檔案底部的 `LV` 設定（1 簡單、2 中等、3 困難，沒寫預設 1）。
+
+## 本機測試
+ES Module 與 Web Worker 不能用雙擊開檔，要用本機伺服器：
+```
+py -m http.server 8000
+```
+再開 `http://localhost:8000`（或用 VS Code 的 Live Server）。
+
+## 限制
+- 沒有後台伺服器，**測資公開在前端原始碼**，且紀錄由使用者端回報，可被偽造，不適合做正式比賽或可信的排行榜。
+- 網站「關閉」是前端畫面攔截 + Firestore 規則禁止一般使用者寫入；靜態檔案本身仍是公開的。
+- 不支援 C / C++（瀏覽器端編譯器檔案太大）。
+- 後台不提供編輯題目：題目請直接改 `data/problems.js` 後 push，有版本紀錄也較安全。
