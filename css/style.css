@@ -177,3 +177,15 @@ main.single{max-width:820px}
 .res details{margin:2px 0 8px 12px}
 .res summary{cursor:pointer;color:var(--mut)}
 .res details pre{margin:2px 0 6px;max-height:200px;overflow:auto}
+/* 難度標籤不換行；清單標題太長時只讓標題換行，右邊的標籤與 ✔ 保持原樣 */
+.lv{white-space:nowrap;flex:none}
+nav a>span:first-child{min-width:0}
+nav a>span:last-child:not(:first-child){flex:none;white-space:nowrap}
+/* 首頁背景動畫（聖誕樹）：畫布放在漸層背景之上、內容之下 */
+body.home::before{z-index:-3}
+body.home::after{z-index:-2}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+body.home .hero h1,body.home .hero p{text-shadow:0 2px 14px var(--bgc)}
+@supports (background:color-mix(in srgb,red,blue)){
+  body.home a.big{background:color-mix(in srgb,var(--card) 82%,transparent);backdrop-filter:blur(6px)}
+}

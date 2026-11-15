@@ -215,7 +215,11 @@ function words(n) { return Array.from({length: n}, () => str(ri(1, 3), "abc")).j
 const LV = {a004: 2, a006: 2, a008: 2, a013: 2, a015: 2, a016: 2, a018: 2, a020: 2, a017: 3, a019: 3,
   a021: 2, a022: 2, a023: 2, a025: 2, a027: 3, a028: 2, a029: 2};
 
+// 題目頁顯示的「範例」。預設用第一筆測資；如果第一筆是 0、1 這種邊界值（範例會很沒意義），就在這裡另外指定。
+const SAMPLE = {a004: "17", a005: "10", a009: "5", a012: "3", a013: "12345", a015: "10", a017: "12", a019: "([]{})", a021: "10", a029: "5", a030: "5"};
+
 export const PROBLEMS = RAW.map(p => {
   const tests = p.inputs.map(i => [i, p.ref(i)]);
-  return {...p, tests, sample: tests[0], level: LV[p.id] || 1};
+  const si = SAMPLE[p.id] || p.inputs[0];
+  return {...p, tests, sample: [si, p.ref(si)], level: LV[p.id] || 1};
 });
