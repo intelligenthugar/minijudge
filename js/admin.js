@@ -2,6 +2,8 @@ import {onUser, login, logout, getSite, setSite, isAdmin} from "./firebase.js";
 import {setWho, authError, notice} from "./ui.js";
 import {LESSONS} from "../data/lessons.js";
 import {PROBLEMS} from "../data/problems.js";
+import {LESSONS_CPP} from "../data/lessons_cpp.js";
+import {BG_LIST} from "./bg.js";
 import {fmtTime} from "./site.js";
 
 const $ = s => document.querySelector(s);
@@ -39,10 +41,10 @@ async function save(patch, ok) {
 }
 
 function render() {
-  const tabs = [["status", "網站狀態"], ["announce", "公告"], ["lessons", "課程"], ["problems", "題目"]];
+  const tabs = [["status", "網站狀態"], ["announce", "公告"], ["lessons", "課程"], ["problems", "題目"], ["look", "外觀"]];
   box.innerHTML = `<div class="tabs">${tabs.map(([k, n]) => `<button class="${tab === k ? "on" : ""}" data-t="${k}">${n}</button>`).join("")}<small id="ok">${flashMsg}</small></div><div id="pane"></div>`;
   box.querySelectorAll(".tabs button").forEach(b => b.onclick = () => { tab = b.dataset.t; flashMsg = ""; render(); });
-  ({status: pStatus, announce: pAnnounce, lessons: pLessons, problems: pProblems})[tab]();
+  ({status: pStatus, announce: pAnnounce, lessons: pLessons, problems: pProblems, look: pLook})[tab]();
 }
 
 // ---- 網站狀態：手動 / 計時 / 定時關閉 ----
@@ -120,6 +122,15 @@ function pList({hint, items, field}) {
   $("#sv").onclick = () => save({[field]: cbs().filter(c => !c.checked).map(c => c.dataset.id)}, "已儲存");
 }
 const pLessons = () => pList({hint: "關閉的單元，使用者會看到「暫時關閉（維修中）」。", field: "closedLessons",
-  items: LESSONS.map((l, i) => ({id: l.id, label: `單元 ${i + 1}　${l.title}`}))});
+  items: [...LESSONS.map((l, i) => ({id: l.id, label: `Python 單元 ${i + 1}　${l.title}`})), ...LESSONS_CPP.map((l, i) => ({id: l.id, label: `C++ 單元 ${i + 1}　${l.title}`}))]});
 const pProblems = () => pList({hint: "關閉的題目，使用者無法開啟與提交，會看到「暫時關閉（維修中）」；有人回報 bug 時可以先關起來。", field: "closedProblems",
   items: PROBLEMS.map(p => ({id: p.id, label: `${p.id}　${p.title}`, lv: p.level}))});
+
+// ---- 外觀：首頁背景動畫 ----
+function pLook() {
+  const cur = site.bg || "tree";
+  $("#pane").innerHTML = `<p><small>選擇首頁的背景動畫，按下去就會套用給所有人（使用者重新整理首頁後生效）。「每次隨機」會在每次開啟首頁時隨機挑一種。</small></p>
+    <div class="opts">${BG_LIST.map(o => `<button class="opt ${o.id === cur ? "on" : ""}" data-id="${o.id}"><b>${o.name}</b><small>${esc(o.desc)}</small></button>`).join("")}</div>
+    <div class="row"><a class="btn go" href="index.html" target="_blank">開啟首頁看看</a></div>`;
+  document.querySelectorAll(".opt").forEach(b => b.onclick = () => save({bg: b.dataset.id}, "背景已切換"));
+}

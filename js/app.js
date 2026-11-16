@@ -2,6 +2,7 @@ import {PROBLEMS} from "../data/problems.js";
 import {onUser, login, logout, loadSubs, saveSub, getSite, isAdmin} from "./firebase.js";
 import {judge} from "./judge.js";
 import {SOLUTIONS} from "../data/solutions.js";
+import {SOLUTIONS_CPP} from "../data/solutions_cpp.js";
 import {highlight} from "./highlight.js";
 import {setWho, authError} from "./ui.js";
 import {isClosed, closedMsg, problemClosed, showAnnounce} from "./site.js";
@@ -139,14 +140,27 @@ function askAnswer() {
 }
 
 function showAnswer() {
-  const a = SOLUTIONS[cur.id];
-  dlg.innerHTML = a
-    ? `<div class="dc"><div class="ttl"><h3>${cur.id} ${esc(cur.title)}・參考答案</h3><button id="x">✕</button></div>
-       <h4>解析</h4><p>${esc(a.exp)}</p>
-       <h4>Python 參考程式碼</h4><pre class="code">${highlight(a.py, "py")}</pre>
-       <div class="row" style="justify-content:flex-end"><button id="cp">複製程式碼</button><button class="p" id="x2">關閉</button></div></div>`
-    : `<div class="dc"><h3>這題還沒有參考答案</h3><div class="row"><button class="p" id="x2">關閉</button></div></div>`;
+  const a = SOLUTIONS[cur.id], c = SOLUTIONS_CPP[cur.id];
+  if (!a) {
+    dlg.innerHTML = `<div class="dc"><h3>這題還沒有參考答案</h3><div class="row"><button class="p" id="x2">關閉</button></div></div>`;
+    $("#x2").onclick = () => dlg.close();
+    return;
+  }
+  let lang = "py";
+  dlg.innerHTML = `<div class="dc"><div class="ttl"><h3>${cur.id} ${esc(cur.title)}・參考答案</h3><button id="x">✕</button></div>
+    <h4>解析</h4><p>${esc(a.exp)}</p>
+    <div class="ttl"><h4>參考程式碼</h4><div class="seg2"><button id="t-py" class="on">Python</button>${c ? '<button id="t-cpp">C++</button>' : ""}</div></div>
+    <pre class="code" id="cv"></pre><p id="cn"></p>
+    <div class="row" style="justify-content:flex-end"><button id="cp">複製程式碼</button><button class="p" id="x2">關閉</button></div></div>`;
+  const paint = () => {
+    $("#cv").innerHTML = highlight(lang === "py" ? a.py : c.code, lang);
+    $("#cn").innerHTML = lang === "cpp" && c.note ? `<small>💡 ${esc(c.note)}</small>` : "";
+    dlg.querySelectorAll(".seg2 button").forEach(b => b.classList.toggle("on", b.id === "t-" + lang));
+    $("#cp").textContent = "複製程式碼";
+  };
   dlg.querySelectorAll("#x,#x2").forEach(b => b.onclick = () => dlg.close());
-  const cp = $("#cp");
-  if (cp) cp.onclick = () => navigator.clipboard.writeText(a.py).then(() => { cp.textContent = "已複製 ✔"; });
+  $("#t-py").onclick = () => { lang = "py"; paint(); };
+  if (c) $("#t-cpp").onclick = () => { lang = "cpp"; paint(); };
+  $("#cp").onclick = () => navigator.clipboard.writeText(lang === "py" ? a.py : c.code).then(() => { $("#cp").textContent = "已複製 ✔"; });
+  paint();
 }

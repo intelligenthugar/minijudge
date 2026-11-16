@@ -3,7 +3,9 @@
 純前端的線上程式評測網站，類似 ZeroJudge。可直接放在 GitHub Pages，**沒有自己的伺服器**，登入與紀錄交給 Firebase。
 
 ## 功能
-- 首頁背景是會動的聖誕樹：用程式符號排成，文字會一波波變色、彩燈閃爍、旁邊飄著雪（深 / 淺色模式各有配色；設定「減少動態效果」的人只會看到靜態的一張）
+- 首頁背景是會動的文字動畫，共 6 種場景（聖誕樹、程式碼雨、大雪、星空流星、煙火、二進位波浪），還有「每次隨機」與「關閉」；管理員可在後台「外觀」分頁隨時切換（深 / 淺色模式各有配色；設定「減少動態效果」的人只會看到靜態的一張）
+- **C++ 教學**：教學頁可切換 Python / C++，C++ 有 8 個單元、39 個範例（全部用 g++ 實際編譯執行過，附真實輸出）；30 題都有 **C++ 參考程式碼**（答案視窗可切換語言，已用 g++ 對全部 528 筆測資驗證過）
+- **C++ 測資**：`testdata/` 是通用的 `.in / .out` 測資檔，搭配 `tools/judge_cpp.py` 可以在自己電腦上用 g++ 評測
 - **函式對照表**（`functions.html`）：118 個常用函式與語法，分 10 類，可搜尋；每個範例都附上真正執行出來的結果，並連到對應的教學單元
 - 提交後，沒通過的測資可以展開看「輸入、期望輸出、你的輸出」（WA 會標出從第幾行開始不同）
 - **首頁**（`index.html`）：選擇「📚 教學」或「🧪 測驗」
@@ -28,12 +30,16 @@ minijudge/
 ├── functions.html      函式對照表
 ├── judge.html          測驗頁（題目與評測，可用 judge.html#a001 直接開題）
 ├── admin.html          後台（僅管理員）
+├── testdata/           各題測資檔（<題號>/<編號>.in、.out；由 tools/export_tests.mjs 產生）
+├── tools/              產生資料與本機 C++ 評測的小工具
 ├── README.md
 ├── fix.md              修改紀錄與不可破壞的規則
 ├── css/style.css       樣式（CSS 變數，深 / 淺色）
 ├── data/problems.js    題目與測資
 ├── data/solutions.js   每題的解析與 Python 參考程式碼
 ├── data/functions.js   函式對照表資料（由 tools/build_functions.py 產生）
+├── data/lessons_cpp.js C++ 教學單元（由 tools/build_cpp_lessons.py 產生）
+├── data/solutions_cpp.js 每題的 C++ 參考程式碼
 ├── data/lessons.js     教學單元與每單元的建議練習題
 └── js/
     ├── config.js       Firebase 設定（自己建立，不在 zip 內）
@@ -48,7 +54,7 @@ minijudge/
     ├── shell.js        首頁 / 教學頁共用的登入與網站開關邏輯
     ├── admin.js        後台介面
     ├── highlight.js    語法上色
-    ├── xmas.js         首頁背景動畫（聖誕樹）
+    ├── bg.js           首頁背景動畫（6 種場景，後台可切換）
     ├── theme.js        深淺色切換
     └── ui.js           頂欄使用者名稱方框
 ```
@@ -125,6 +131,17 @@ service cloud.firestore {
 ## 新增或修改函式對照表
 編輯 `tools/build_functions.py` 裡的 `add(...)` 清單，再執行 `python tools/build_functions.py`，會用 python3 實際跑每個範例、把結果寫進 `data/functions.js`（不要手改那個檔案）。
 
+## C++ 練習與評測
+網站目前只能直接提交 **Python / JavaScript**。C++ 在瀏覽器裡沒有可靠的評測方式（純瀏覽器的 C++ 直譯器只支援很小的子集，沒有 vector、sort 等 STL，也很慢），所以 C++ 提供三樣東西：教學單元、每題的 C++ 參考程式碼，以及可以在自己電腦上評測的測資：
+```
+node tools/export_tests.mjs                 # 產生 testdata/（改了題目之後要重新執行）
+python tools/judge_cpp.py a001 my.cpp       # 用 g++ -O2 -std=c++17 編譯並逐筆比對
+```
+`testdata/` 的格式（`<題號>/<編號>.in`、`.out`、`meta.json`）也可以直接匯入其他評測系統。
+
+## 新增 C++ 教學
+編輯 `tools/build_cpp_lessons.py` 的 `UNITS`，再執行 `python tools/build_cpp_lessons.py`（需要 g++），會把每個範例真的編譯、執行，並把輸出寫進 `data/lessons_cpp.js`（不要手改）。
+
 ## 新增教學單元
 編輯 `data/lessons.js`，格式見檔案開頭的說明。每個單元的 `practice.must / more` 要填 `problems.js` 裡存在的題號；範例程式請先在本機用 python3 跑過確認輸出正確。
 
@@ -136,7 +153,7 @@ service cloud.firestore {
  ref: s => /* 參考解：輸入字串 → 答案字串 */,
  inputs: ["測資輸入1", "測資輸入2", ...]}
 ```
-標準答案由 `ref` 自動算出。範例預設用第一筆測資；如果第一筆是 0、1 這種邊界值（範例會沒意義），到檔案底部的 `SAMPLE` 另外指定範例輸入。**同時要到 `data/solutions.js` 補上同一題的 `exp`（解析）與 `py`（Python 參考程式碼）。**難度在檔案底部的 `LV` 設定（1 簡單、2 中等、3 困難，沒寫預設 1）。
+標準答案由 `ref` 自動算出。範例預設用第一筆測資；如果第一筆是 0、1 這種邊界值（範例會沒意義），到檔案底部的 `SAMPLE` 另外指定範例輸入。**同時要到 `data/solutions.js` 補上同一題的 `exp`（解析）與 `py`（Python 參考程式碼），到 `data/solutions_cpp.js` 補上 C++ 版，並重新執行 `node tools/export_tests.mjs`。**難度在檔案底部的 `LV` 設定（1 簡單、2 中等、3 困難，沒寫預設 1）。
 
 ## 本機測試
 ES Module 與 Web Worker 不能用雙擊開檔，要用本機伺服器：
@@ -148,5 +165,5 @@ py -m http.server 8000
 ## 限制
 - 沒有後台伺服器，**測資公開在前端原始碼**，且紀錄由使用者端回報，可被偽造，不適合做正式比賽或可信的排行榜。
 - 網站、單元、題目的「關閉」是前端畫面攔截 + Firestore 規則禁止一般使用者寫入紀錄；靜態檔案本身仍是公開的。計時 / 定時關閉在使用者載入頁面時判斷，已經開著頁面的人要重新整理才會看到變化，也依賴使用者電腦的時鐘（Firestore 規則則用伺服器時間）。
-- 不支援 C / C++（瀏覽器端編譯器檔案太大）。
+- 不能直接在網站上提交 C / C++（見上方「C++ 練習與評測」）。
 - 後台不提供編輯題目：題目請直接改 `data/problems.js` 後 push，有版本紀錄也較安全。
