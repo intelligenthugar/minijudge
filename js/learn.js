@@ -52,16 +52,16 @@ function practice(l, tr) {
     <h4>必做</h4>${must.map(chip).join("")}
     ${more.length ? `<h4>挑戰（寫完必做再來）</h4>${more.map(chip).join("")}` : ""}
     <p><small>點題目會開啟測驗頁，卡住時題目頁右上角有「參考答案」（有 Python 與 C++ 兩種）。</small></p>
-    ${tr === "cpp" ? `<div class="note warn">⚠️ 網站目前只能直接提交 Python / JavaScript。用 C++ 練習請在自己的電腦上評測：先執行 <code>node tools/export_tests.mjs</code> 產生測資，再用 <code>python tools/judge_cpp.py 題號 你的程式.cpp</code>（需要 g++）。詳見 README。</div>` : ""}</div>`;
+    ${tr === "cpp" ? (state.site.runnerUrl ? `<div class="note tip">💡 點題目進入測驗頁後，語言選「C++ (g++)」就能直接提交評測。</div>` : `<div class="note warn">⚠️ 這個網站目前還沒有開啟 C++ 線上評測。想用 C++ 練習，可以在自己的電腦上評測：執行 <code>python tools/judge_cpp.py 題號 你的程式.cpp</code>（需要 g++ 與 node），詳見 README。</div>`) : ""}</div>`;
 }
 function renderNav(cur, tr) {
-  const L = unitsOf(tr), done = tr === "py" ? L.filter(unitDone).length : 0;
+  const L = unitsOf(tr), prog = tr === "py" || !!state.site.runnerUrl, done = prog ? L.filter(unitDone).length : 0;
   $("#stat").innerHTML = `<div class="seg"><a href="#u01" class="${tr === "py" ? "on" : ""}">Python</a><a href="#c01" class="${tr === "cpp" ? "on" : ""}">C++</a></div>` +
-    (tr === "cpp" ? "<small>C++ 單元不記錄進度</small>"
+    (!prog ? "<small>C++ 單元不記錄進度</small>"
       : state.user ? `已完成 <b>${done}</b> / ${L.length} 單元<div class="bar"><i style="width:${done / L.length * 100}%"></i></div><small>必做題全部通過才算完成</small>`
       : "<small>登入後可記錄學習進度</small>");
   $("#list").innerHTML = L.map((l, i) =>
-    `<a class="${i === cur ? "on" : ""}${lessonClosed(state.site, l.id) ? " off" : ""}" href="#${l.id}"><span><span class="un">${i + 1}</span>　${esc(l.title)}</span>${lessonClosed(state.site, l.id) ? "🔒" : tr === "py" && unitDone(l) ? '<span class="ac">✔</span>' : ""}</a>`).join("");
+    `<a class="${i === cur ? "on" : ""}${lessonClosed(state.site, l.id) ? " off" : ""}" href="#${l.id}"><span><span class="un">${i + 1}</span>　${esc(l.title)}</span>${lessonClosed(state.site, l.id) ? "🔒" : prog && unitDone(l) ? '<span class="ac">✔</span>' : ""}</a>`).join("");
 }
 function render() {
   if (state.closed) {

@@ -1,5 +1,6 @@
 import {onUser, login, logout, getSite, setSite, isAdmin} from "./firebase.js";
 import {setWho, authError, notice} from "./ui.js";
+import {runRemote} from "./runner.js";
 import {LESSONS} from "../data/lessons.js";
 import {PROBLEMS} from "../data/problems.js";
 import {LESSONS_CPP} from "../data/lessons_cpp.js";
@@ -41,10 +42,10 @@ async function save(patch, ok) {
 }
 
 function render() {
-  const tabs = [["status", "網站狀態"], ["announce", "公告"], ["lessons", "課程"], ["problems", "題目"], ["look", "外觀"]];
+  const tabs = [["status", "網站狀態"], ["announce", "公告"], ["lessons", "課程"], ["problems", "題目"], ["look", "外觀"], ["cpp", "C++ 評測"]];
   box.innerHTML = `<div class="tabs">${tabs.map(([k, n]) => `<button class="${tab === k ? "on" : ""}" data-t="${k}">${n}</button>`).join("")}<small id="ok">${flashMsg}</small></div><div id="pane"></div>`;
   box.querySelectorAll(".tabs button").forEach(b => b.onclick = () => { tab = b.dataset.t; flashMsg = ""; render(); });
-  ({status: pStatus, announce: pAnnounce, lessons: pLessons, problems: pProblems, look: pLook})[tab]();
+  ({status: pStatus, announce: pAnnounce, lessons: pLessons, problems: pProblems, look: pLook, cpp: pCpp})[tab]();
 }
 
 // ---- 網站狀態：手動 / 計時 / 定時關閉 ----
@@ -133,4 +134,27 @@ function pLook() {
     <div class="opts">${BG_LIST.map(o => `<button class="opt ${o.id === cur ? "on" : ""}" data-id="${o.id}"><b>${o.name}</b><small>${esc(o.desc)}</small></button>`).join("")}</div>
     <div class="row"><a class="btn go" href="index.html" target="_blank">開啟首頁看看</a></div>`;
   document.querySelectorAll(".opt").forEach(b => b.onclick = () => save({bg: b.dataset.id}, "背景已切換"));
+}
+
+// ---- C++ 評測：Cloudflare Worker 網址（填了，測驗頁才會出現 C++ 選項）----
+function pCpp() {
+  $("#pane").innerHTML = `<p><small>貼上 Cloudflare Worker 的網址，測驗頁就會出現「C++ (g++)」選項；清空再儲存就是關閉。設定步驟見 README「開啟網站上的 C++ 評測」。</small></p>
+    <label>Worker 網址</label>
+    <input id="ru" placeholder="https://minijudge-run.你的名字.workers.dev" value="${esc(site.runnerUrl || "")}">
+    <div class="row"><button class="p" id="ru-save">儲存</button><button id="ru-test">測試連線</button></div>
+    <pre class="out" id="ru-out" hidden></pre>`;
+  const val = () => $("#ru").value.trim().replace(/\/+$/, "");
+  $("#ru-save").onclick = () => {
+    const v = val();
+    if (v && !/^https:\/\/|^http:\/\/localhost/.test(v)) return notice("網址要以 https:// 開頭。", "網址不正確");
+    save({runnerUrl: v}, v ? "已儲存，測驗頁會出現 C++ 選項" : "已關閉 C++ 評測");
+  };
+  $("#ru-test").onclick = async () => {
+    const v = val(), out = $("#ru-out");
+    if (!v) return notice("請先貼上 Worker 網址。", "沒有網址");
+    out.hidden = false; out.textContent = "測試中…";
+    const code = "#include <iostream>\nint main() { int a, b; std::cin >> a >> b; std::cout << a + b << std::endl; }";
+    const r = await runRemote(v, code, "3 4", 5000);
+    out.textContent = r.v === "OK" && r.out.trim() === "7" ? "✅ 連線成功：C++ 程式可以編譯並執行（3 + 4 = 7）" : `❌ 失敗（${r.v}）：${r.err || r.out || "輸出不是預期的 7"}`;
+  };
 }

@@ -5,7 +5,8 @@
 ## 功能
 - 首頁背景是會動的文字動畫，共 6 種場景（聖誕樹、程式碼雨、大雪、星空流星、煙火、二進位波浪），還有「每次隨機」與「關閉」；管理員可在後台「外觀」分頁隨時切換（深 / 淺色模式各有配色；設定「減少動態效果」的人只會看到靜態的一張）
 - **C++ 教學**：教學頁可切換 Python / C++，C++ 有 8 個單元、39 個範例（全部用 g++ 實際編譯執行過，附真實輸出）；30 題都有 **C++ 參考程式碼**（答案視窗可切換語言，已用 g++ 對全部 528 筆測資驗證過）
-- **C++ 測資**：`testdata/` 是通用的 `.in / .out` 測資檔，搭配 `tools/judge_cpp.py` 可以在自己電腦上用 g++ 評測
+- **C++ 線上評測**（選用）：管理員在後台貼上 Cloudflare Worker 網址後，測驗頁就能選「C++ (g++)」直接提交，由 OnlineCompiler.io 編譯執行（免費方案每月 10 萬次執行），設定步驟見下方
+- **C++ 本機評測**：`tools/judge_cpp.py` 可以在自己電腦上用 g++ 對全部測資評測
 - **函式對照表**（`functions.html`）：118 個常用函式與語法，分 10 類，可搜尋；每個範例都附上真正執行出來的結果，並連到對應的教學單元
 - 提交後，沒通過的測資可以展開看「輸入、期望輸出、你的輸出」（WA 會標出從第幾行開始不同）
 - **首頁**（`index.html`）：選擇「📚 教學」或「🧪 測驗」
@@ -30,7 +31,7 @@ minijudge/
 ├── functions.html      函式對照表
 ├── judge.html          測驗頁（題目與評測，可用 judge.html#a001 直接開題）
 ├── admin.html          後台（僅管理員）
-├── testdata/           各題測資檔（<題號>/<編號>.in、.out；由 tools/export_tests.mjs 產生）
+├── worker/             Cloudflare Worker（C++ 線上評測用，放 API 金鑰的地方）
 ├── tools/              產生資料與本機 C++ 評測的小工具
 ├── README.md
 ├── fix.md              修改紀錄與不可破壞的規則
@@ -131,13 +132,21 @@ service cloud.firestore {
 ## 新增或修改函式對照表
 編輯 `tools/build_functions.py` 裡的 `add(...)` 清單，再執行 `python tools/build_functions.py`，會用 python3 實際跑每個範例、把結果寫進 `data/functions.js`（不要手改那個檔案）。
 
-## C++ 練習與評測
-網站目前只能直接提交 **Python / JavaScript**。C++ 在瀏覽器裡沒有可靠的評測方式（純瀏覽器的 C++ 直譯器只支援很小的子集，沒有 vector、sort 等 STL，也很慢），所以 C++ 提供三樣東西：教學單元、每題的 C++ 參考程式碼，以及可以在自己電腦上評測的測資：
+## 開啟網站上的 C++ 評測（OnlineCompiler.io + Cloudflare Worker）
+網站是純靜態的，不能自己編譯 C++，所以請 OnlineCompiler.io 幫忙編譯執行；API 金鑰不能放在網頁裡（任何人都看得到），所以中間放一個免費的 Cloudflare Worker 轉送。流程：`網頁 → Worker（有金鑰）→ OnlineCompiler.io`。
+1. 到 <https://api.onlinecompiler.io/compilers/api-keys/> 註冊並建立 API 金鑰（免費方案不需信用卡；建議在金鑰頁面設定每月使用上限）。
+2. 到 Cloudflare（<https://dash.cloudflare.com>）註冊免費帳號 → Workers & Pages → 建立 Worker → 部署 → 編輯程式碼，貼上 `worker/cloudflare-worker.js` 的內容並部署。
+3. 在 Worker 的設定 → 變數與機密：新增文字變數 `SITE_ORIGIN`（你的網站網域，例如 `https://intelligenthugar.github.io`，不含路徑；要本機測試就用逗號加上 `http://localhost:8000`），再新增機密 `ONLINECOMPILER_API_KEY`（貼上金鑰）。重新部署。
+4. 複製 Worker 的網址（`https://名稱.你的子網域.workers.dev`）。
+5. 登入網站後台 → 「C++ 評測」分頁 → 貼上網址 → 儲存 → 按「測試連線」，看到 ✅ 就完成了。測驗頁的語言選單會多出「C++ (g++)」；要關閉就把網址清空再儲存。
+- 金鑰只在 Worker 的機密裡，**不要**寫進 `config.js` 或任何網站檔案、也不要推上 GitHub。
+- 每筆測資算一次執行；一次提交約 7～13 次，第一筆編譯失敗就會停止。
+
+## C++ 本機評測（不需要網路）
 ```
-node tools/export_tests.mjs                 # 產生 testdata/（改了題目之後要重新執行）
-python tools/judge_cpp.py a001 my.cpp       # 用 g++ -O2 -std=c++17 編譯並逐筆比對
+python tools/judge_cpp.py a001 my.cpp       # 需要 g++ 與 node；第一次會自動產生 tools/testdata.json
 ```
-`testdata/` 的格式（`<題號>/<編號>.in`、`.out`、`meta.json`）也可以直接匯入其他評測系統。
+會用 `g++ -O2 -std=c++17` 編譯，依題目時間限制逐筆比對輸出。
 
 ## 新增 C++ 教學
 編輯 `tools/build_cpp_lessons.py` 的 `UNITS`，再執行 `python tools/build_cpp_lessons.py`（需要 g++），會把每個範例真的編譯、執行，並把輸出寫進 `data/lessons_cpp.js`（不要手改）。
@@ -153,7 +162,7 @@ python tools/judge_cpp.py a001 my.cpp       # 用 g++ -O2 -std=c++17 編譯並�
  ref: s => /* 參考解：輸入字串 → 答案字串 */,
  inputs: ["測資輸入1", "測資輸入2", ...]}
 ```
-標準答案由 `ref` 自動算出。範例預設用第一筆測資；如果第一筆是 0、1 這種邊界值（範例會沒意義），到檔案底部的 `SAMPLE` 另外指定範例輸入。**同時要到 `data/solutions.js` 補上同一題的 `exp`（解析）與 `py`（Python 參考程式碼），到 `data/solutions_cpp.js` 補上 C++ 版，並重新執行 `node tools/export_tests.mjs`。**難度在檔案底部的 `LV` 設定（1 簡單、2 中等、3 困難，沒寫預設 1）。
+標準答案由 `ref` 自動算出。範例預設用第一筆測資；如果第一筆是 0、1 這種邊界值（範例會沒意義），到檔案底部的 `SAMPLE` 另外指定範例輸入。**同時要到 `data/solutions.js` 補上同一題的 `exp`（解析）與 `py`（Python 參考程式碼），到 `data/solutions_cpp.js` 補上 C++ 版，。**難度在檔案底部的 `LV` 設定（1 簡單、2 中等、3 困難，沒寫預設 1）。
 
 ## 本機測試
 ES Module 與 Web Worker 不能用雙擊開檔，要用本機伺服器：
@@ -165,5 +174,5 @@ py -m http.server 8000
 ## 限制
 - 沒有後台伺服器，**測資公開在前端原始碼**，且紀錄由使用者端回報，可被偽造，不適合做正式比賽或可信的排行榜。
 - 網站、單元、題目的「關閉」是前端畫面攔截 + Firestore 規則禁止一般使用者寫入紀錄；靜態檔案本身仍是公開的。計時 / 定時關閉在使用者載入頁面時判斷，已經開著頁面的人要重新整理才會看到變化，也依賴使用者電腦的時鐘（Firestore 規則則用伺服器時間）。
-- 不能直接在網站上提交 C / C++（見上方「C++ 練習與評測」）。
+- C++ 線上評測需要自己設定 Cloudflare Worker 與 OnlineCompiler.io 金鑰（見上方）；沒有設定時網站只能提交 Python / JavaScript。額度、速度與可用性取決於 OnlineCompiler.io。
 - 後台不提供編輯題目：題目請直接改 `data/problems.js` 後 push，有版本紀錄也較安全。

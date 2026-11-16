@@ -1,6 +1,7 @@
 import {PROBLEMS} from "../data/problems.js";
 import {onUser, login, logout, loadSubs, saveSub, getSite, isAdmin} from "./firebase.js";
 import {judge} from "./judge.js";
+import {judgeCpp} from "./runner.js";
 import {SOLUTIONS} from "../data/solutions.js";
 import {SOLUTIONS_CPP} from "../data/solutions_cpp.js";
 import {highlight} from "./highlight.js";
@@ -12,7 +13,8 @@ const esc = s => String(s).replace(/[&<>]/g, c => ({"&": "&amp;", "<": "&lt;", "
 const LV = ["", "簡單", "中等", "困難"];
 const TEMPLATE = {
   py: "# 用 input() 讀取輸入，print() 輸出答案\n",
-  js: "// 用 readline() 讀一行，print() 輸出答案\n"
+  js: "// 用 readline() 讀一行，print() 輸出答案\n",
+  cpp: "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    \n}\n"
 };
 let user = null, subs = {}, cur = PROBLEMS.find(p => p.id === location.hash.slice(1)) || PROBLEMS[0], note = "", site = {}, isAdm = false;
 
@@ -66,7 +68,7 @@ function show(id) {
     <b>輸出說明</b><div class="box">${esc(cur.outFmt)}</div>
     <b>範例輸入</b><pre>${esc(cur.sample[0])}</pre>
     <b>範例輸出</b><pre>${esc(cur.sample[1])}</pre>
-    <div class="row"><select id="lang"><option value="py">Python 3</option><option value="js">JavaScript</option></select>
+    <div class="row"><select id="lang"><option value="py">Python 3</option><option value="js">JavaScript</option>${site.runnerUrl ? '<option value="cpp">C++ (g++)</option>' : ""}</select>
       <button class="p" id="go">提交</button><small id="hint"></small></div>
     <div class="editor"><pre id="hl" aria-hidden="true"></pre><textarea id="code" spellcheck="false" wrap="off"></textarea></div>
     <div class="res" id="res"></div>`;
@@ -92,7 +94,8 @@ function firstDiff(exp, got) {
   return 0;
 }
 function detail(v, info) {
-  if (v === "AC" || !info) return "";
+  if (v === "AC" || v === "ERR" || !info) return "";
+  if (v === "CE") return `<details open><summary>編譯錯誤訊息</summary><pre>${esc(cut(info.err || "", 1500))}</pre></details>`;
   const k = v === "WA" ? firstDiff(info.expected, info.got) : 0;
   const head = v === "WA" ? (k ? `從第 ${k} 行開始不同` : "輸出內容不同") : "這筆測資";
   return `<details><summary>${head}：看輸入與輸出</summary><b>輸入</b><pre>${esc(cut(info.input))}</pre>` +
@@ -103,11 +106,12 @@ function detail(v, info) {
 async function submit() {
   const lang = $("#lang").value, code = $("#code").value, res = $("#res"), btn = $("#go");
   btn.disabled = true; res.innerHTML = "";
-  $("#hint").textContent = lang === "py" ? "首次執行 Python 需載入環境，請稍候…" : "";
-  const r = await judge(lang, code, cur.tests, cur.limit, (i, v, err, info) => {
+  $("#hint").textContent = lang === "py" ? "首次執行 Python 需載入環境，請稍候…" : lang === "cpp" ? "C++ 會送到評測服務編譯並執行，大約需要幾秒…" : "";
+  const run = lang === "cpp" ? (c, t, l, f) => judgeCpp(site.runnerUrl, c, t, l, f) : (c, t, l, f) => judge(lang, c, t, l, f);
+  const r = await run(code, cur.tests, cur.limit, (i, v, err, info) => {
     const d = document.createElement("div");
     d.innerHTML = `測資 ${i + 1}：<span class="v-${v}">${v}</span>` +
-      (err ? ` <small>${esc(err.split("\n").slice(-2).join(" "))}</small>` : "") + detail(v, info);
+      (err && v !== "CE" ? ` <small>${esc(err.split("\n").slice(-2).join(" "))}</small>` : "") + detail(v, info);
     res.appendChild(d);
   });
   $("#hint").textContent = ""; btn.disabled = false;

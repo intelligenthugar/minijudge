@@ -34,9 +34,11 @@
 28. 難度標籤（`.lv`）一律 `white-space:nowrap`，清單項目太長時只能讓標題換行，不能讓標籤斷成兩行。
 29. 首頁背景動畫在 `js/bg.js`（`<canvas id="bg">`，`body.home`），共 6 種場景 + 隨機 + 關閉，場景由後台 `config/site.bg` 決定（`home.js` 會先用 localStorage 記住的值立刻開始，再換成最新設定；新增場景要同時加進 `SCENES` 與 `BG_LIST`）。畫布 `z-index:-1`，原本的深 / 淺色漸層層被推到更後面（`body.home::before/::after`）。顏色要隨深 / 淺色模式切換、**不使用粉紅色**；必須尊重 `prefers-reduced-motion`（只畫靜態一張）；動畫限制約 30fps 以省電。首頁卡片用半透明（`color-mix`）讓背景透出來。
 30. 題目頁的「範例輸入 / 輸出」要有代表性，不能是 0、1、單一字元這種邊界值；第一筆測資若是邊界值，就在 `problems.js` 底部的 `SAMPLE` 指定。新增題目時要檢查範例看起來有沒有意義。
-31. **C++ 內容**：教學單元（`data/lessons_cpp.js`）由 `tools/build_cpp_lessons.py` 產生，範例要用 g++ 實際編譯執行；每題都要有 C++ 參考程式碼（`data/solutions_cpp.js`），且要用 `tools/judge_cpp.py` 對全部測資跑過。網站**不能提交 C++**（瀏覽器內沒有可靠的 C++ 評測），不要承諾這點。
-32. `testdata/` 是由 `node tools/export_tests.mjs` 產生的；修改題目或測資後一定要重新執行。每個 C++ 單元的推薦題也要全部存在於 `problems.js`；`closedLessons` 同時涵蓋 Python 單元（u01…）與 C++ 單元（c01…）。
+31. **C++ 內容**：教學單元（`data/lessons_cpp.js`）由 `tools/build_cpp_lessons.py` 產生，範例要用 g++ 實際編譯執行；每題都要有 C++ 參考程式碼（`data/solutions_cpp.js`），且要用 `tools/judge_cpp.py` 對全部測資跑過。
+32. 本機評測用的測資是 `tools/testdata.json`（由 `node tools/export_tests.mjs` 產生，**單一檔案、不要放進 zip / 版本控制**；不要再產生一大堆 `.in/.out` 檔）。每個 C++ 單元的推薦題要全部存在於 `problems.js`；`closedLessons` 同時涵蓋 Python 單元（u01…）與 C++ 單元（c01…）。
 33. 首頁三張卡片要保持半透明（`body.home a.big`），讓背景動畫看得到；文字用 `text-shadow` 維持可讀。
+34. **C++ 線上評測**：網頁 → Cloudflare Worker（`worker/cloudflare-worker.js`，持有 OnlineCompiler.io 金鑰）→ OnlineCompiler.io 的 Piston 相容 API（`POST /api/v2/piston/execute`，`Authorization: 金鑰` 不加 Bearer）。**API 金鑰絕不能出現在網站任何檔案或程式碼裡**；該 API 不送 CORS 標頭，所以一定要經過 Worker。Worker 要檢查 Origin、只允許 C++、限制程式與輸入大小、限制 timeout。
+35. Worker 網址存在 `config/site.runnerUrl`（後台「C++ 評測」分頁設定）；有值測驗頁才會出現 C++ 選項，不要改成要求使用者修改 `config.js`（缺少匯出會讓整個網站壞掉）。新判定 `CE`（編譯錯誤）、`ERR`（評測服務問題）：第一筆測資編譯失敗或服務出錯就停止，其餘測資 4 筆一組並行送出。評測流程在 `js/runner.js`。
 
 ## 修改紀錄
 
@@ -159,3 +161,11 @@
   - `xmas.js` 改成 `bg.js`：6 種場景（聖誕樹、程式碼雨、大雪、星空流星、煙火、二進位波浪）+ 每次隨機 + 關閉；後台新增「外觀」分頁，選擇存在 `config/site.bg`；課程分頁也列出 C++ 單元。
   - 新增 C++：`lessons_cpp.js`（8 單元、39 個範例，g++ 實際執行）、`solutions_cpp.js`（30 題，528 筆測資全部通過）、`testdata/`、`tools/judge_cpp.py` / `export_tests.mjs`；教學頁可切換 Python / C++；答案視窗有 Python / C++ 分頁；`highlight.js` 支援 C++。
   - 網站無法直接提交 C++（原因見規則 31），所以 C++ 練習用本機評測。
+
+### 23. 網站上的 C++ 評測（OnlineCompiler.io）、測資改成單一檔案
+- 需求：使用 OnlineCompiler.io 讓網站可以評測 C++，要一步一步教；testdata 檔案太多（558 個）。
+- 做法：
+  - 新增 `worker/cloudflare-worker.js`（放金鑰、檢查 Origin、只允許 C++）、`js/runner.js`（逐筆評測，含 CE / ERR 判定）；測驗頁語言選單在有設定 Worker 網址時多出「C++ (g++)」；後台新增「C++ 評測」分頁（貼網址、測試連線）；教學頁的 C++ 單元在開啟後也會記錄進度。
+  - 驗證：Worker 的 12 項行為測試全過；用本機 g++ 模擬評測服務，30 題 C++ 參考答案走完整評測流程全部 AC，另測 CE / WA / RE / TLE / 服務錯誤 / 斷線皆判定正確。
+  - 測資：刪除 `testdata/` 資料夾（558 個檔），改為 `tools/testdata.json` 單一檔案、需要時自動產生、不放進 zip；`judge_cpp.py` 同步修改。
+  - 更正：先前口頭說的免費額度「每月 1 萬次」有誤，官方頁面（2026/11/12 更新）寫的是每月 10 萬次執行。

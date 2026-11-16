@@ -1,5 +1,5 @@
 let W = null;
-const norm = s => s.replace(/\r/g, "").split("\n").map(l => l.trimEnd()).join("\n").trim();
+export const norm = s => s.replace(/\r/g, "").split("\n").map(l => l.trimEnd()).join("\n").trim();
 
 export function runCase(lang, code, input, limit) {
   return new Promise(res => {
