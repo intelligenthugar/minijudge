@@ -42,15 +42,23 @@ export function solvedBy(s) {
 
 // 提交後要存進 Firestore 的紀錄。每種語言各自記住「最後一次提交的程式碼」與「最後一次通過的程式碼（acCode）」，
 // 所以換語言不會蓋掉另一種語言的程式碼，之後失敗也不會弄丟通過的版本。注意：Firestore 不接受 undefined。
+export const passedLangs = s => ["py", "cpp"].filter(k => solvedBy(s)[k]);
+
 export function buildRecord(prev, lang, code, r) {
   prev = prev || {};
-  const pb = (prev.byLang || {})[lang] || {};
+  // 舊紀錄（還沒有 byLang）只有最後一次提交的 lang / code：先把它搬進 byLang，不然這次提交會把它蓋掉
+  const legacy = {};
+  if (prev.lang && prev.code && !(prev.byLang && prev.byLang[prev.lang])) {
+    legacy[prev.lang] = {code: prev.code, passed: prev.passed || 0, total: prev.total || 0, solved: !!solvedBy(prev)[prev.lang], acCode: prev.lastStatus === "AC" ? prev.code : null};
+  }
+  const base = {...legacy, ...(prev.byLang || {})};
+  const pb = base[lang] || {};
   const by = {...solvedBy(prev), ...(r.solved ? {[lang]: true} : {})};
   return {
     lang, code, passed: r.passed, total: r.total,
     solved: !!(r.solved || prev.solved),
     solvedBy: by,
-    byLang: {...(prev.byLang || {}), [lang]: {code, passed: r.passed, total: r.total, solved: !!(r.solved || pb.solved || by[lang]), acCode: r.solved ? code : (pb.acCode || null)}},
+    byLang: {...base, [lang]: {code, passed: r.passed, total: r.total, solved: !!(r.solved || pb.solved || by[lang]), acCode: r.solved ? code : (pb.acCode || null)}},
     lastStatus: r.solved ? "AC" : (r.first || "WA"),
     tries: (prev.tries || 0) + 1
   };

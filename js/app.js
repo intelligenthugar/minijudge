@@ -6,7 +6,7 @@ import {SOLUTIONS} from "../data/solutions.js";
 import {SOLUTIONS_CPP} from "../data/solutions_cpp.js";
 import {highlight} from "./highlight.js";
 import {setWho, authError} from "./ui.js";
-import {isClosed, closedMsg, problemClosed, showAnnounce, solvedBy, buildRecord} from "./site.js";
+import {isClosed, closedMsg, problemClosed, showAnnounce, solvedBy, passedLangs, buildRecord} from "./site.js";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"}[c]));
@@ -17,11 +17,15 @@ const TEMPLATE = {
 };
 // 清單上的 ✔ 旁邊標出是用哪種語言通過的
 const LANG_NAME = {py: "Python", cpp: "C++"};
-const passedLangs = s => ["py", "cpp"].filter(k => solvedBy(s)[k]);
-const badges = s => passedLangs(s).map(k => `<i class="lg lg-${k}" title="用 ${LANG_NAME[k]} 通過">${k === "py" ? "Py" : "C++"}</i>`).join("");
+const badges = s => {
+  const l = passedLangs(s);
+  if (l.length === 2) return '<i class="lg lg-both" title="Python 與 C++ 都通過">都通過</i>';   // 兩種語言都通過就寫「都通過」
+  return l.map(k => `<i class="lg lg-${k}" title="用 ${LANG_NAME[k]} 通過">${k === "py" ? "Py" : "C++"}</i>`).join("");
+};
 const langText = s => passedLangs(s).length ? `（${passedLangs(s).map(k => LANG_NAME[k]).join("、")}）` : "";
 
 let refreshBar = () => {};
+const drafts = {};   // 這次開著網頁期間，每題每種語言正在編輯的內容（切換語言、換題目再回來都還在）
 let user = null, subs = {}, cur = PROBLEMS.find(p => p.id === location.hash.slice(1)) || PROBLEMS[0], note = "", site = {}, isAdm = false;
 
 $("#auth").onclick = async () => {
@@ -84,18 +88,22 @@ function show(id) {
   if (s && s.lang && [...lg.options].some(o => o.value === s.lang)) lg.value = s.lang;   // 舊紀錄的語言如果已經不提供，就用預設的
   // 每種語言各自記住最後一次提交的程式碼；舊紀錄只有最後一次的 code / lang
   const codeFor = l => { const p = subs[id] || {}, b = (p.byLang || {})[l]; return (b && b.code) || (p.lang === l && p.code) || TEMPLATE[l]; };
+  let curLang = lg.value;
+  const key = () => id + ":" + curLang;
+  const setCode = v => { ta.value = v; drafts[key()] = v; paint(); bar(); };
   const bar = () => {
     const p = subs[id] || {}, b = (p.byLang || {})[lg.value], el = $("#acbar");
     if (!solvedBy(p)[lg.value]) { el.hidden = true; return; }
     const ac = (b && b.acCode) || (p.lang === lg.value && p.lastStatus === "AC" ? p.code : null);
     el.hidden = false;
     el.innerHTML = `✔ 你已經用 ${LANG_NAME[lg.value]} 通過這題。` + (ac && ac !== ta.value ? ` <button id="loadac">載入我通過的程式碼</button>` : "");
-    if (ac && ac !== ta.value) $("#loadac").onclick = () => { ta.value = ac; paint(); bar(); };
+    if (ac && ac !== ta.value) $("#loadac").onclick = () => setCode(ac);
   };
   refreshBar = bar;
-  ta.value = codeFor(lg.value);
-  lg.onchange = () => { ta.value = codeFor(lg.value); paint(); bar(); };
-  ta.oninput = () => { paint(); bar(); };
+  const start = () => drafts[key()] != null ? drafts[key()] : codeFor(curLang);
+  ta.value = start();
+  lg.onchange = () => { drafts[key()] = ta.value; curLang = lg.value; ta.value = start(); paint(); bar(); };
+  ta.oninput = () => { drafts[key()] = ta.value; paint(); bar(); };
   ta.onscroll = () => { hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft; };
   ta.onkeydown = e => { if (e.key === "Tab") { e.preventDefault(); document.execCommand("insertText", false, "    "); } };
   paint(); bar();
