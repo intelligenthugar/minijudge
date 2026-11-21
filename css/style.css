@@ -211,3 +211,6 @@ nav .seg a.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 .lg{font-style:normal;font-size:10.5px;line-height:1.5;padding:0 5px;margin-left:3px;border-radius:5px;background:var(--code);border:1px solid var(--bd);font-weight:700;vertical-align:middle}
 .lg-py{color:var(--warn)}
 .lg-cpp{color:var(--ac)}
+/* 已通過的提示列（可載入通過的程式碼） */
+.acbar{margin:6px 0;padding:6px 12px;border-radius:8px;background:var(--tip-bg);color:var(--tip-fg)}
+.acbar button{padding:2px 10px;margin-left:8px}

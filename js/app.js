@@ -6,7 +6,7 @@ import {SOLUTIONS} from "../data/solutions.js";
 import {SOLUTIONS_CPP} from "../data/solutions_cpp.js";
 import {highlight} from "./highlight.js";
 import {setWho, authError} from "./ui.js";
-import {isClosed, closedMsg, problemClosed, showAnnounce, solvedBy} from "./site.js";
+import {isClosed, closedMsg, problemClosed, showAnnounce, solvedBy, buildRecord} from "./site.js";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"}[c]));
@@ -21,6 +21,7 @@ const passedLangs = s => ["py", "cpp"].filter(k => solvedBy(s)[k]);
 const badges = s => passedLangs(s).map(k => `<i class="lg lg-${k}" title="用 ${LANG_NAME[k]} 通過">${k === "py" ? "Py" : "C++"}</i>`).join("");
 const langText = s => passedLangs(s).length ? `（${passedLangs(s).map(k => LANG_NAME[k]).join("、")}）` : "";
 
+let refreshBar = () => {};
 let user = null, subs = {}, cur = PROBLEMS.find(p => p.id === location.hash.slice(1)) || PROBLEMS[0], note = "", site = {}, isAdm = false;
 
 $("#auth").onclick = async () => {
@@ -75,17 +76,29 @@ function show(id) {
     <b>範例輸出</b><pre>${esc(cur.sample[1])}</pre>
     <div class="row"><select id="lang"><option value="py">Python 3</option>${site.runnerUrl ? '<option value="cpp">C++ (g++)</option>' : ""}</select>
       <button class="p" id="go">提交</button><small id="hint"></small></div>
+    <div class="acbar" id="acbar" hidden></div>
     <div class="editor"><pre id="hl" aria-hidden="true"></pre><textarea id="code" spellcheck="false" wrap="off"></textarea></div>
     <div class="res" id="res"></div>`;
   const ta = $("#code"), lg = $("#lang"), hl = $("#hl");
   const paint = () => { hl.innerHTML = highlight(ta.value, lg.value) + "\n"; };
   if (s && s.lang && [...lg.options].some(o => o.value === s.lang)) lg.value = s.lang;   // 舊紀錄的語言如果已經不提供，就用預設的
-  ta.value = (s && s.lang === lg.value && s.code) || TEMPLATE[lg.value];
-  lg.onchange = () => { ta.value = TEMPLATE[lg.value]; paint(); };
-  ta.oninput = paint;
+  // 每種語言各自記住最後一次提交的程式碼；舊紀錄只有最後一次的 code / lang
+  const codeFor = l => { const p = subs[id] || {}, b = (p.byLang || {})[l]; return (b && b.code) || (p.lang === l && p.code) || TEMPLATE[l]; };
+  const bar = () => {
+    const p = subs[id] || {}, b = (p.byLang || {})[lg.value], el = $("#acbar");
+    if (!solvedBy(p)[lg.value]) { el.hidden = true; return; }
+    const ac = (b && b.acCode) || (p.lang === lg.value && p.lastStatus === "AC" ? p.code : null);
+    el.hidden = false;
+    el.innerHTML = `✔ 你已經用 ${LANG_NAME[lg.value]} 通過這題。` + (ac && ac !== ta.value ? ` <button id="loadac">載入我通過的程式碼</button>` : "");
+    if (ac && ac !== ta.value) $("#loadac").onclick = () => { ta.value = ac; paint(); bar(); };
+  };
+  refreshBar = bar;
+  ta.value = codeFor(lg.value);
+  lg.onchange = () => { ta.value = codeFor(lg.value); paint(); bar(); };
+  ta.oninput = () => { paint(); bar(); };
   ta.onscroll = () => { hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft; };
   ta.onkeydown = e => { if (e.key === "Tab") { e.preventDefault(); document.execCommand("insertText", false, "    "); } };
-  paint();
+  paint(); bar();
   $("#go").onclick = submit;
   $("#ans").onclick = askAnswer;
 }
@@ -124,12 +137,10 @@ async function submit() {
     `<h3 class="${r.solved ? "ac" : "wa"}">${r.solved ? "🎉 Accepted" : r.first}（${r.passed}/${r.total}）</h3>`);
   if (!user) { res.insertAdjacentHTML("beforeend", "<small>登入後才能儲存紀錄。</small>"); return; }
   const prev = subs[cur.id] || {};
-  const rec = {lang, code, passed: r.passed, total: r.total, solved: r.solved || !!prev.solved,
-               solvedBy: {...(prev.solvedBy || (prev.solved && prev.lang ? {[prev.lang]: true} : {})), ...(r.solved ? {[lang]: true} : {})},
-               lastStatus: r.solved ? "AC" : r.first, tries: (prev.tries || 0) + 1};
+  const rec = buildRecord(prev, lang, code, r);
   try {
     await saveSub(user.uid, cur.id, rec);
-    subs[cur.id] = rec; renderList();
+    subs[cur.id] = rec; renderList(); refreshBar();
     res.insertAdjacentHTML("beforeend", "<small>已儲存紀錄。</small>");
   } catch (e) { res.insertAdjacentHTML("beforeend", `<small class="wa">儲存失敗：${esc(e.message)}</small>`); }
 }

@@ -32,8 +32,26 @@ export function showAnnounce(site) {
   el.querySelector("button").onclick = () => { try { localStorage.setItem("mj-ann", key); } catch (e) {} el.remove(); };
 }
 
-// 這題用哪些語言通過：新紀錄有 solvedBy；舊紀錄只有 solved 與最後一次的 lang，就用 lang 判斷
+// 這題用哪些語言通過：新紀錄有 solvedBy / byLang；舊紀錄只有 solved 與最後一次的 lang，就用 lang 判斷
 export function solvedBy(s) {
   if (!s) return {};
-  return s.solvedBy || (s.solved && s.lang ? {[s.lang]: true} : {});
+  const o = {...(s.solvedBy || (s.solved && s.lang ? {[s.lang]: true} : {}))};
+  for (const k of Object.keys(s.byLang || {})) if (s.byLang[k] && s.byLang[k].solved) o[k] = true;
+  return o;
+}
+
+// 提交後要存進 Firestore 的紀錄。每種語言各自記住「最後一次提交的程式碼」與「最後一次通過的程式碼（acCode）」，
+// 所以換語言不會蓋掉另一種語言的程式碼，之後失敗也不會弄丟通過的版本。注意：Firestore 不接受 undefined。
+export function buildRecord(prev, lang, code, r) {
+  prev = prev || {};
+  const pb = (prev.byLang || {})[lang] || {};
+  const by = {...solvedBy(prev), ...(r.solved ? {[lang]: true} : {})};
+  return {
+    lang, code, passed: r.passed, total: r.total,
+    solved: !!(r.solved || prev.solved),
+    solvedBy: by,
+    byLang: {...(prev.byLang || {}), [lang]: {code, passed: r.passed, total: r.total, solved: !!(r.solved || pb.solved || by[lang]), acCode: r.solved ? code : (pb.acCode || null)}},
+    lastStatus: r.solved ? "AC" : (r.first || "WA"),
+    tries: (prev.tries || 0) + 1
+  };
 }
