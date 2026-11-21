@@ -31,3 +31,9 @@ export function showAnnounce(site) {
   el.innerHTML = `<span>📢 ${esc(text)}</span><button title="關閉公告">✕</button>`;
   el.querySelector("button").onclick = () => { try { localStorage.setItem("mj-ann", key); } catch (e) {} el.remove(); };
 }
+
+// 這題用哪些語言通過：新紀錄有 solvedBy；舊紀錄只有 solved 與最後一次的 lang，就用 lang 判斷
+export function solvedBy(s) {
+  if (!s) return {};
+  return s.solvedBy || (s.solved && s.lang ? {[s.lang]: true} : {});
+}

@@ -6,16 +6,21 @@ import {SOLUTIONS} from "../data/solutions.js";
 import {SOLUTIONS_CPP} from "../data/solutions_cpp.js";
 import {highlight} from "./highlight.js";
 import {setWho, authError} from "./ui.js";
-import {isClosed, closedMsg, problemClosed, showAnnounce} from "./site.js";
+import {isClosed, closedMsg, problemClosed, showAnnounce, solvedBy} from "./site.js";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"}[c]));
 const LV = ["", "簡單", "中等", "困難"];
 const TEMPLATE = {
   py: "# 用 input() 讀取輸入，print() 輸出答案\n",
-  js: "// 用 readline() 讀一行，print() 輸出答案\n",
   cpp: "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    \n}\n"
 };
+// 清單上的 ✔ 旁邊標出是用哪種語言通過的
+const LANG_NAME = {py: "Python", cpp: "C++"};
+const passedLangs = s => ["py", "cpp"].filter(k => solvedBy(s)[k]);
+const badges = s => passedLangs(s).map(k => `<i class="lg lg-${k}" title="用 ${LANG_NAME[k]} 通過">${k === "py" ? "Py" : "C++"}</i>`).join("");
+const langText = s => passedLangs(s).length ? `（${passedLangs(s).map(k => LANG_NAME[k]).join("、")}）` : "";
+
 let user = null, subs = {}, cur = PROBLEMS.find(p => p.id === location.hash.slice(1)) || PROBLEMS[0], note = "", site = {}, isAdm = false;
 
 $("#auth").onclick = async () => {
@@ -45,7 +50,7 @@ function renderList() {
   $("#stat").innerHTML = `已通過 <b>${done}</b> / ${PROBLEMS.length}<div class="bar"><i style="width:${done / PROBLEMS.length * 100}%"></i></div>`;
   $("#list").innerHTML = PROBLEMS.map(p => {
     const s = subs[p.id];
-    const m = s ? (s.solved ? '<span class="ac">✔</span>' : '<span class="wa">✘</span>') : "";
+    const m = s ? (s.solved ? '<span class="ac">✔</span>' + badges(s) : '<span class="wa">✘</span>') : "";
     return `<a data-id="${p.id}" class="${p.id === cur.id ? "on" : ""}${problemClosed(site, p.id) ? " off" : ""}"><span>${p.id} ${esc(p.title)}</span><span><span class="lv lv${p.level}">${LV[p.level]}</span> ${problemClosed(site, p.id) ? "🔒" : m}</span></a>`;
   }).join("");
   document.querySelectorAll("#list a").forEach(a => a.onclick = () => show(a.dataset.id));
@@ -62,19 +67,19 @@ function show(id) {
   const warn = shut ? '<div class="banner">這一題對一般使用者關閉中（你是管理員，仍可使用）</div>' : "";
   $("#view").innerHTML = `${note}${warn}
     <div class="ttl"><h2>${cur.id}：${esc(cur.title)} <span class="lv lv${cur.level}">${LV[cur.level]}</span></h2><button class="ans" id="ans">💡 參考答案</button></div>
-    <small>時間限制 ${cur.limit / 1000} 秒　｜　共 ${cur.tests.length} 筆測資${s ? `　｜　你的紀錄：${s.solved ? "已通過" : "尚未通過"}，嘗試 ${s.tries || 1} 次` : ""}</small>
+    <small>時間限制 ${cur.limit / 1000} 秒　｜　共 ${cur.tests.length} 筆測資${s ? `　｜　你的紀錄：${s.solved ? "已通過" + langText(s) : "尚未通過"}，嘗試 ${s.tries || 1} 次` : ""}</small>
     <p>${esc(cur.desc)}</p>
     <b>輸入說明</b><div class="box">${esc(cur.inFmt)}</div>
     <b>輸出說明</b><div class="box">${esc(cur.outFmt)}</div>
     <b>範例輸入</b><pre>${esc(cur.sample[0])}</pre>
     <b>範例輸出</b><pre>${esc(cur.sample[1])}</pre>
-    <div class="row"><select id="lang"><option value="py">Python 3</option><option value="js">JavaScript</option>${site.runnerUrl ? '<option value="cpp">C++ (g++)</option>' : ""}</select>
+    <div class="row"><select id="lang"><option value="py">Python 3</option>${site.runnerUrl ? '<option value="cpp">C++ (g++)</option>' : ""}</select>
       <button class="p" id="go">提交</button><small id="hint"></small></div>
     <div class="editor"><pre id="hl" aria-hidden="true"></pre><textarea id="code" spellcheck="false" wrap="off"></textarea></div>
     <div class="res" id="res"></div>`;
   const ta = $("#code"), lg = $("#lang"), hl = $("#hl");
   const paint = () => { hl.innerHTML = highlight(ta.value, lg.value) + "\n"; };
-  if (s && s.lang) lg.value = s.lang;
+  if (s && s.lang && [...lg.options].some(o => o.value === s.lang)) lg.value = s.lang;   // 舊紀錄的語言如果已經不提供，就用預設的
   ta.value = (s && s.lang === lg.value && s.code) || TEMPLATE[lg.value];
   lg.onchange = () => { ta.value = TEMPLATE[lg.value]; paint(); };
   ta.oninput = paint;

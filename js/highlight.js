@@ -1,18 +1,15 @@
-// 輕量語法上色（Python / JavaScript），不依賴外部套件。回傳已跳脫的 HTML。
+// 輕量語法上色（Python / C++），不依賴外部套件。回傳已跳脫的 HTML。
 const KW = {
   py: new Set("and as assert break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield True False None".split(" ")),
-  cpp: new Set("int long double float char bool void auto const static if else for while do break continue return struct class using namespace true false new delete switch case default typedef unsigned signed short size_t nullptr".split(" ")),
-  js: new Set("const let var function return if else for while do break continue new class extends import export from of in typeof instanceof true false null undefined this switch case default try catch finally throw async await".split(" "))
+  cpp: new Set("int long double float char bool void auto const static if else for while do break continue return struct class using namespace true false new delete switch case default typedef unsigned signed short size_t nullptr".split(" "))
 };
 const BI = {
   py: new Set("print input range len int str float list map sum min max sorted abs set dict tuple enumerate zip reversed bin chr ord".split(" ")),
-  cpp: new Set("cin cout endl cerr string vector pair map set stack queue deque swap sqrt pow gcd __gcd to_string stoi printf scanf make_pair max min abs sort reverse max_element min_element rotate fixed setprecision toupper tolower".split(" ")),
-  js: new Set("console Math Number String Array Object readline print BigInt parseInt Set Map JSON".split(" "))
+  cpp: new Set("cin cout endl cerr string vector pair map set stack queue deque swap sqrt pow gcd __gcd to_string stoi printf scanf make_pair max min abs sort reverse max_element min_element rotate fixed setprecision toupper tolower".split(" "))
 };
 const RE = {
   py: /(#.*)|("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(\b\d+(?:\.\d+)?(?:e\d+)?\b)|([A-Za-z_]\w*)/g,
-  cpp: /(\/\/.*|\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|(?<=#include\s*)<[^>\n]+>)|(\b\d+(?:\.\d+)?(?:e\d+)?(?:LL|ll|[fFuU])?\b)|(#\s*\w+|[A-Za-z_]\w*)/g,
-  js: /(\/\/.*|\/\*[\s\S]*?\*\/)|(`(?:\\.|[^`\\])*`|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(\b\d+(?:\.\d+)?(?:e\d+)?\b)|([A-Za-z_$][\w$]*)/g
+  cpp: /(\/\/.*|\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|(?<=#include\s*)<[^>\n]+>)|(\b\d+(?:\.\d+)?(?:e\d+)?(?:LL|ll|[fFuU])?\b)|(#\s*\w+|[A-Za-z_]\w*)/g
 };
 const esc = s => s.replace(/[&<>]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"}[c]));
 

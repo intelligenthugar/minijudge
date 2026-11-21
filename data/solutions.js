@@ -31,7 +31,7 @@ a008: {exp: "輾轉相除法：gcd(a, b) = gcd(b, a mod b)，一直做到餘數�
 while b:
     a, b = b, a % b     # 輾轉相除法
 print(a)`},
-a009: {exp: "從 2 乘到 n。0! 與 1! 都是 1，迴圈不會執行，結果維持 1。JavaScript 的 Number 超過 18! 就會失去精度，所以本題限制 n ≤ 18。", py: `n = int(input())
+a009: {exp: "從 2 乘到 n。0! 與 1! 都是 1，迴圈不會執行，結果維持 1。18! 約 6.4 × 10^15，所以本題限制 n ≤ 18（C++ 要用 long long，用 int 在 13! 就會溢位）。", py: `n = int(input())
 r = 1
 for i in range(2, n + 1):
     r *= i
@@ -113,7 +113,7 @@ while i < len(s):
     res.append(s[i] + str(j - i))
     i = j
 print("".join(res))`},
-a024: {exp: "lcm(a, b) = a × b ÷ gcd(a, b)。先除再乘可以避免中間值太大。本題限制在 10^6 以內，JavaScript 的 Number 也不會失去精度。", py: `from math import gcd
+a024: {exp: "lcm(a, b) = a × b ÷ gcd(a, b)。先除再乘可以避免中間值太大。本題限制在 10^6 以內，a × b 的結果不會太大。", py: `from math import gcd
 
 a, b = map(int, input().split())
 print(a // gcd(a, b) * b)`},

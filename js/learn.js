@@ -4,7 +4,7 @@ import {PROBLEMS} from "../data/problems.js";
 import {highlight} from "./highlight.js";
 import {runCase} from "./judge.js";
 import {boot} from "./shell.js";
-import {closedMsg, lessonClosed, problemClosed} from "./site.js";
+import {closedMsg, lessonClosed, problemClosed, solvedBy} from "./site.js";
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"}[c]));
@@ -14,12 +14,7 @@ const byId = Object.fromEntries(PROBLEMS.map(p => [p.id, p]));
 let state = {closed: false, admin: false, subs: {}, user: null, site: {}}, CODES = [];
 
 // 用哪種語言通過：新紀錄有 solvedBy；舊紀錄只有 solved，就用當時的語言 lang 判斷
-const solved = (id, tr) => {
-  const s = state.subs[id];
-  if (!s) return false;
-  const by = s.solvedBy || (s.solved && s.lang ? {[s.lang]: true} : {});
-  return !!by[tr];
-};
+const solved = (id, tr) => !!solvedBy(state.subs[id])[tr];
 const unitDone = (l, tr) => { const m = l.practice.must.filter(id => !problemClosed(state.site, id)); return m.length > 0 && m.every(id => solved(id, tr)); };
 const unitsOf = tr => tr === "cpp" ? LESSONS_CPP : LESSONS;
 

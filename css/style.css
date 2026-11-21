@@ -22,7 +22,7 @@ header button:hover,header .btn:hover{background:#ffffff50}
 button.p{background:linear-gradient(90deg,#6366f1,#8b5cf6);color:#fff;border:0}
 button.danger{background:linear-gradient(90deg,#dc2626,#ef4444);color:#fff;border:0}
 button:disabled{opacity:.5;cursor:wait}
-main{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 56px)}
+main{display:grid;grid-template-columns:300px 1fr;min-height:calc(100vh - 56px)}
 main.single{display:block;max-width:720px;margin:0 auto}
 @media(max-width:700px){main{grid-template-columns:1fr}}
 nav{padding:12px;background:var(--nav);border-right:1px solid var(--bd)}
@@ -207,3 +207,7 @@ nav .seg a.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 .fseg{display:flex;gap:6px;margin:10px 0}
 .fseg a{padding:5px 20px;border:1px solid var(--bd);border-radius:8px;text-decoration:none;color:var(--fg);background:var(--card)}
 .fseg a.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+/* 題目清單：通過的語言標籤 */
+.lg{font-style:normal;font-size:10.5px;line-height:1.5;padding:0 5px;margin-left:3px;border-radius:5px;background:var(--code);border:1px solid var(--bd);font-weight:700;vertical-align:middle}
+.lg-py{color:var(--warn)}
+.lg-cpp{color:var(--ac)}
