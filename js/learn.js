@@ -13,8 +13,14 @@ const LV = ["", "簡單", "中等", "困難"];
 const byId = Object.fromEntries(PROBLEMS.map(p => [p.id, p]));
 let state = {closed: false, admin: false, subs: {}, user: null, site: {}}, CODES = [];
 
-const solved = id => !!(state.subs[id] && state.subs[id].solved);
-const unitDone = l => { const m = l.practice.must.filter(id => !problemClosed(state.site, id)); return m.length > 0 && m.every(solved); };
+// 用哪種語言通過：新紀錄有 solvedBy；舊紀錄只有 solved，就用當時的語言 lang 判斷
+const solved = (id, tr) => {
+  const s = state.subs[id];
+  if (!s) return false;
+  const by = s.solvedBy || (s.solved && s.lang ? {[s.lang]: true} : {});
+  return !!by[tr];
+};
+const unitDone = (l, tr) => { const m = l.practice.must.filter(id => !problemClosed(state.site, id)); return m.length > 0 && m.every(id => solved(id, tr)); };
 const unitsOf = tr => tr === "cpp" ? LESSONS_CPP : LESSONS;
 
 // 目前是 Python 還是 C++ 教學：看網址（#c01 / #u01），沒有的話用上次的選擇
@@ -28,9 +34,9 @@ function track() {
 boot(s => { state = s; render(); }, {subs: true});
 window.onhashchange = render;
 
-function chip(id) {
+function chip(id, tr) {
   const p = byId[id];
-  return `<a class="pchip" href="judge.html#${id}"><span class="pid">${id}</span>${esc(p.title)}<span class="lv lv${p.level}">${LV[p.level]}</span>${problemClosed(state.site, id) ? "🔒" : solved(id) ? '<span class="ac">✔</span>' : ""}</a>`;
+  return `<a class="pchip" href="judge.html#${id}"><span class="pid">${id}</span>${esc(p.title)}<span class="lv lv${p.level}">${LV[p.level]}</span>${problemClosed(state.site, id) ? "🔒" : solved(id, tr) ? '<span class="ac">✔</span>' : ""}</a>`;
 }
 function codeBlock(c, tr) {
   const k = CODES.push(c) - 1;
@@ -49,19 +55,19 @@ function practice(l, tr) {
   const {must, more, tip} = l.practice;
   return `<div class="practice"><h3>📝 教完囉！建議接著做這些題目</h3>
     ${tip ? `<p>${fmt(tip)}</p>` : ""}
-    <h4>必做</h4>${must.map(chip).join("")}
-    ${more.length ? `<h4>挑戰（寫完必做再來）</h4>${more.map(chip).join("")}` : ""}
+    <h4>必做</h4>${must.map(id => chip(id, tr)).join("")}
+    ${more.length ? `<h4>挑戰（寫完必做再來）</h4>${more.map(id => chip(id, tr)).join("")}` : ""}
     <p><small>點題目會開啟測驗頁，卡住時題目頁右上角有「參考答案」（有 Python 與 C++ 兩種）。</small></p>
     ${tr === "cpp" ? (state.site.runnerUrl ? `<div class="note tip">💡 點題目進入測驗頁後，語言選「C++ (g++)」就能直接提交評測。</div>` : `<div class="note warn">⚠️ 這個網站目前還沒有開啟 C++ 線上評測。想用 C++ 練習，可以在自己的電腦上評測：執行 <code>python tools/judge_cpp.py 題號 你的程式.cpp</code>（需要 g++ 與 node），詳見 README。</div>`) : ""}</div>`;
 }
 function renderNav(cur, tr) {
-  const L = unitsOf(tr), prog = tr === "py" || !!state.site.runnerUrl, done = prog ? L.filter(unitDone).length : 0;
+  const L = unitsOf(tr), prog = tr === "py" || !!state.site.runnerUrl, done = prog ? L.filter(l => unitDone(l, tr)).length : 0;
   $("#stat").innerHTML = `<div class="seg"><a href="#u01" class="${tr === "py" ? "on" : ""}">Python</a><a href="#c01" class="${tr === "cpp" ? "on" : ""}">C++</a></div>` +
     (!prog ? "<small>C++ 單元不記錄進度</small>"
-      : state.user ? `已完成 <b>${done}</b> / ${L.length} 單元<div class="bar"><i style="width:${done / L.length * 100}%"></i></div><small>必做題全部通過才算完成</small>`
+      : state.user ? `已完成 <b>${done}</b> / ${L.length} 單元<div class="bar"><i style="width:${done / L.length * 100}%"></i></div><small>用 ${tr === "cpp" ? "C++" : "Python"} 通過全部必做題才算完成</small>`
       : "<small>登入後可記錄學習進度</small>");
   $("#list").innerHTML = L.map((l, i) =>
-    `<a class="${i === cur ? "on" : ""}${lessonClosed(state.site, l.id) ? " off" : ""}" href="#${l.id}"><span><span class="un">${i + 1}</span>　${esc(l.title)}</span>${lessonClosed(state.site, l.id) ? "🔒" : prog && unitDone(l) ? '<span class="ac">✔</span>' : ""}</a>`).join("");
+    `<a class="${i === cur ? "on" : ""}${lessonClosed(state.site, l.id) ? " off" : ""}" href="#${l.id}"><span><span class="un">${i + 1}</span>　${esc(l.title)}</span>${lessonClosed(state.site, l.id) ? "🔒" : prog && unitDone(l, tr) ? '<span class="ac">✔</span>' : ""}</a>`).join("");
 }
 function render() {
   if (state.closed) {

@@ -203,3 +203,7 @@ nav .seg a.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 .seg2 button{padding:3px 12px}
 .seg2 button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 .v-CE{color:var(--warn);font-weight:700}.v-ERR{color:var(--mut);font-weight:700}
+/* 函式表：Python / C++ 切換 */
+.fseg{display:flex;gap:6px;margin:10px 0}
+.fseg a{padding:5px 20px;border:1px solid var(--bd);border-radius:8px;text-decoration:none;color:var(--fg);background:var(--card)}
+.fseg a.on{background:var(--ac);color:#fff;border-color:var(--ac)}

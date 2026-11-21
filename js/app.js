@@ -120,6 +120,7 @@ async function submit() {
   if (!user) { res.insertAdjacentHTML("beforeend", "<small>登入後才能儲存紀錄。</small>"); return; }
   const prev = subs[cur.id] || {};
   const rec = {lang, code, passed: r.passed, total: r.total, solved: r.solved || !!prev.solved,
+               solvedBy: {...(prev.solvedBy || (prev.solved && prev.lang ? {[prev.lang]: true} : {})), ...(r.solved ? {[lang]: true} : {})},
                lastStatus: r.solved ? "AC" : r.first, tries: (prev.tries || 0) + 1};
   try {
     await saveSub(user.uid, cur.id, rec);

@@ -14,7 +14,9 @@
 </header>
 <div id="fwrap" class="fwrap">
   <div class="hero"><h1>函式與語法對照表</h1><p>每個範例都實際執行過，右邊的結果就是真的印出來的內容。<span id="count"></span></p></div>
-  <input id="q" type="search" placeholder="搜尋函式或用途，例如：排序、split、lambda">
+  <div id="fseg" class="fseg"></div>
+  <p id="cnote" class="b" hidden>多數範例只列出重點片段，實際使用時要放進 <code>main()</code>，並在最前面加上 <code>#include &lt;bits/stdc++.h&gt;</code> 與 <code>using namespace std;</code>。右邊的結果是補齊之後真的用 g++ 編譯、執行得到的。</p>
+  <input id="q" type="search" placeholder="搜尋函式或用途，例如：排序、split、lambda、vector">
   <div id="chips"></div>
   <div id="tables"></div>
   <p id="none" class="hero" hidden>找不到符合的函式，換個關鍵字試試。</p>
