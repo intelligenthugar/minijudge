@@ -194,7 +194,161 @@ const RAW = [
  desc: "輸入 n，依序輸出 1 到 n：3 的倍數輸出 Fizz，5 的倍數輸出 Buzz，同時是 15 的倍數輸出 FizzBuzz，其餘輸出數字本身。每個一行。",
  inFmt: "一個整數 n（1 ≤ n ≤ 100）", outFmt: "n 行",
  ref: s => Array.from({length: +s}, (_, i) => { const k = i + 1; return k % 15 === 0 ? "FizzBuzz" : k % 3 === 0 ? "Fizz" : k % 5 === 0 ? "Buzz" : String(k); }).join("\n"),
- inputs: ["1", "3", "5", "10", "15", "16", "30", "50", "100"]}
+ inputs: ["1", "3", "5", "10", "15", "16", "30", "50", "100"]},
+
+// ======== APCS 風格（原創題目，題型與難度參考 APCS 實作題，不是歷屆考題） ========
+{id: "a031", title: "成績統計", limit: 2000,
+ desc: "老師想快速了解一次考試的成績。輸入 n 個分數，輸出最高分、最低分、平均分數（無條件捨去到整數），以及不及格（低於 60 分）的人數，四個數字以空白分隔。",
+ inFmt: "第一行 n（1 ≤ n ≤ 1000），第二行 n 個整數（0 ≤ 分數 ≤ 100）", outFmt: "一行四個整數：最高分 最低分 平均 不及格人數",
+ ref: s => { const a = s.split("\n")[1].split(" ").map(Number); return [Math.max(...a), Math.min(...a), Math.floor(a.reduce((x, y) => x + y, 0) / a.length), a.filter(x => x < 60).length].join(" "); },
+ inputs: ["5\n80 55 92 60 71", "1\n100", "3\n0 0 0", "4\n59 60 61 100", list(arr(30, 0, 100)), list(arr(1000, 0, 100)), list(arr(1000, 60, 100)), list(arr(500, 0, 59))]},
+
+{id: "a032", title: "最大括號深度", limit: 2000,
+ desc: "輸入一個合法的括號字串（只含 ( 與 )，保證每個左括號都有對應的右括號），輸出括號巢狀的最大深度。例如 (()(())) 的最大深度是 3。",
+ inFmt: "一行字串（長度 ≤ 1000，保證合法且不是空字串）", outFmt: "一個整數",
+ ref: s => { let d = 0, m = 0; for (const c of s) { if (c === "(") { d++; m = Math.max(m, d); } else d--; } return String(m); },
+ inputs: ["(()(()))", "()", "((()))", "()()()", "(".repeat(500) + ")".repeat(500), "()".repeat(500), pbal(40), pbal(200), pbal(1000)]},
+
+{id: "a033", title: "逆序數對", limit: 2000,
+ desc: "給定 n 個整數，求有幾組 (i, j) 滿足 i < j 且 a[i] > a[j]，這樣的一組叫做「逆序數對」。這個數字，也剛好等於用氣泡排序把陣列由小到大排好所需要的相鄰交換次數。",
+ inFmt: "第一行 n（1 ≤ n ≤ 1000），第二行 n 個整數（|x| ≤ 10^9）", outFmt: "一個整數",
+ ref: s => { const a = s.split("\n")[1].split(" ").map(Number); let c = 0; for (let i = 0; i < a.length; i++) for (let j = i + 1; j < a.length; j++) if (a[i] > a[j]) c++; return String(c); },
+ inputs: ["5\n3 1 2 5 4", "1\n7", "4\n4 3 2 1", "4\n1 2 3 4", "5\n2 2 2 2 2", list(arr(1000, -1e9, 1e9)), list(arr(1000, 0, 5)), list(Array.from({length: 1000}, (_, i) => 1000 - i))]},
+
+{id: "a034", title: "矩陣旋轉", limit: 2000,
+ desc: "輸入一個 n × m 的整數矩陣，輸出把它「順時針旋轉 90 度」之後的矩陣（會變成 m × n）。",
+ inFmt: "第一行 n m（1 ≤ n, m ≤ 30），接下來 n 行，每行 m 個整數", outFmt: "m 行，每行 n 個整數，以空白分隔",
+ ref: s => { const L = s.split("\n"), [n, m] = L[0].split(" ").map(Number), a = L.slice(1, 1 + n).map(r => r.split(" ")), o = []; for (let j = 0; j < m; j++) { const row = []; for (let i = n - 1; i >= 0; i--) row.push(a[i][j]); o.push(row.join(" ")); } return o.join("\n"); },
+ inputs: ["2 3\n1 2 3\n4 5 6", "1 1\n5", "3 3\n1 2 3\n4 5 6\n7 8 9", "1 4\n1 2 3 4", "4 1\n1\n2\n3\n4", mat(7, 13, -9, 99), mat(13, 7, -9, 99), mat(30, 30, 0, 999)]},
+
+{id: "a035", title: "螺旋矩陣", limit: 2000,
+ desc: "輸入 n，產生一個 n × n 的矩陣：從左上角開始，依「向右 → 向下 → 向左 → 向上」的順時針方向繞圈，依序填入 1, 2, 3, …, n²。輸出這個矩陣。",
+ inFmt: "一個整數 n（1 ≤ n ≤ 20）", outFmt: "n 行，每行 n 個整數，以空白分隔",
+ ref: s => { const n = +s, g = Array.from({length: n}, () => Array(n).fill(0)), dr = [0, 1, 0, -1], dc = [1, 0, -1, 0]; let r = 0, c = 0, d = 0; for (let k = 1; k <= n * n; k++) { g[r][c] = k; let nr = r + dr[d], nc = c + dc[d]; if (nr < 0 || nr >= n || nc < 0 || nc >= n || g[nr][nc]) { d = (d + 1) % 4; nr = r + dr[d]; nc = c + dc[d]; } r = nr; c = nc; } return g.map(row => row.join(" ")).join("\n"); },
+ inputs: ["4", "1", "2", "3", "5", "7", "10", "15", "20"]},
+
+{id: "a036", title: "島嶼數量", limit: 3000,
+ desc: "地圖是一個 n × m 的格子，1 代表陸地、0 代表海。上下左右相連的陸地算同一座島（斜角不算相連）。輸入地圖，輸出島嶼的數量。",
+ inFmt: "第一行 n m（1 ≤ n, m ≤ 20），接下來 n 行，每行 m 個字元（只有 0 與 1，中間沒有空白）", outFmt: "一個整數",
+ ref: s => { const L = s.split("\n"), [n, m] = L[0].split(" ").map(Number), g = L.slice(1, 1 + n).map(r => r.split("")); let cnt = 0; const st = []; for (let i = 0; i < n; i++) for (let j = 0; j < m; j++) if (g[i][j] === "1") { cnt++; g[i][j] = "0"; st.push([i, j]); while (st.length) { const [r, c] = st.pop(); for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const x = r + dr, y = c + dc; if (x >= 0 && x < n && y >= 0 && y < m && g[x][y] === "1") { g[x][y] = "0"; st.push([x, y]); } } } } return String(cnt); },
+ inputs: ["4 6\n110010\n110010\n001100\n000001", "1 1\n1", "1 1\n0", "2 2\n11\n11", "3 3\n101\n010\n101", grid01(10, 10, 0.4), grid01(20, 20, 0.5), grid01(20, 20, 0.7), grid01(20, 20, 0.3), "20 20\n" + Array(20).fill("1".repeat(20)).join("\n"), "20 20\n" + Array(20).fill("0".repeat(20)).join("\n")]},
+
+{id: "a037", title: "迷宮最短路", limit: 3000,
+ desc: "迷宮是 n × m 的格子：S 是起點、E 是終點、. 是空地、# 是牆。每一步可以往上、下、左、右走到相鄰的空地（或終點），不能穿牆。輸出從 S 走到 E 的最少步數；如果走不到，輸出 -1。",
+ inFmt: "第一行 n m（1 ≤ n, m ≤ 21），接下來 n 行，每行 m 個字元（沒有空白，保證恰好一個 S 與一個 E）", outFmt: "一個整數",
+ ref: s => { const L = s.split("\n"), [n, m] = L[0].split(" ").map(Number), g = L.slice(1, 1 + n); let sr = 0, sc = 0; for (let i = 0; i < n; i++) for (let j = 0; j < m; j++) if (g[i][j] === "S") { sr = i; sc = j; } const d = Array.from({length: n}, () => Array(m).fill(-1)); d[sr][sc] = 0; const q = [[sr, sc]]; for (let h = 0; h < q.length; h++) { const [r, c] = q[h]; if (g[r][c] === "E") return String(d[r][c]); for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const x = r + dr, y = c + dc; if (x >= 0 && x < n && y >= 0 && y < m && g[x][y] !== "#" && d[x][y] === -1) { d[x][y] = d[r][c] + 1; q.push([x, y]); } } } return "-1"; },
+ inputs: ["3 4\nS..#\n.#..\n...E", "1 2\nSE", "3 3\nS#E\n.#.\n.#.", "2 2\nS#\n#E", maze(10, 10, 0.25), maze(15, 15, 0.3), maze(20, 20, 0.2), maze(20, 20, 0), snake(15, 15), snake(21, 21)]},
+
+{id: "a038", title: "河內塔", limit: 2000,
+ desc: "河內塔有三根柱子 A、B、C，A 柱上由上到下有 n 個由小到大的圓盤。每次只能搬一個圓盤，而且大圓盤不能放在小圓盤的上面。請輸出把所有圓盤從 A 搬到 C（可以借用 B）的最少步驟，每一步一行，格式為「來源 目的」。",
+ inFmt: "一個整數 n（1 ≤ n ≤ 6）", outFmt: "2^n - 1 行，每行兩個大寫字母，例如 A C",
+ ref: s => { const o = []; const f = (n, a, c, b) => { if (!n) return; f(n - 1, a, b, c); o.push(a + " " + c); f(n - 1, b, c, a); }; f(+s, "A", "C", "B"); return o.join("\n"); },
+ inputs: ["3", "1", "2", "4", "5", "6"]},
+
+{id: "a039", title: "全排列", limit: 2000,
+ desc: "輸入 n，依「字典順序」輸出 1 到 n 的所有排列，每個排列一行，數字之間以空白分隔。",
+ inFmt: "一個整數 n（1 ≤ n ≤ 6）", outFmt: "n! 行，每行 n 個整數",
+ ref: s => { const n = +s, o = [], cur = [], used = Array(n + 1).fill(false); const dfs = () => { if (cur.length === n) { o.push(cur.join(" ")); return; } for (let x = 1; x <= n; x++) if (!used[x]) { used[x] = true; cur.push(x); dfs(); cur.pop(); used[x] = false; } }; dfs(); return o.join("\n"); },
+ inputs: ["3", "1", "2", "4", "5", "6"]},
+
+{id: "a040", title: "N 皇后", limit: 4000,
+ desc: "在 n × n 的棋盤上放 n 個皇后，使得任兩個皇后都不在同一列、同一行，也不在同一條斜線上。輸入 n，輸出總共有幾種放法。",
+ inFmt: "一個整數 n（1 ≤ n ≤ 9）", outFmt: "一個整數",
+ ref: s => { const n = +s, cols = Array(n).fill(false), d1 = Array(2 * n + 1).fill(false), d2 = Array(2 * n + 1).fill(false); const go = r => { if (r === n) return 1; let t = 0; for (let c = 0; c < n; c++) { if (cols[c] || d1[r - c + n] || d2[r + c]) continue; cols[c] = d1[r - c + n] = d2[r + c] = true; t += go(r + 1); cols[c] = d1[r - c + n] = d2[r + c] = false; } return t; }; return String(go(0)); },
+ inputs: ["6", "1", "2", "3", "4", "5", "7", "8", "9"]},
+
+{id: "a041", title: "零錢兌換", limit: 2000,
+ desc: "有 k 種面額的硬幣，每種的數量都沒有限制。輸入目標金額，輸出湊出該金額最少需要幾枚硬幣；如果無論如何都湊不出來，輸出 -1。",
+ inFmt: "第一行 k 與金額 T（1 ≤ k ≤ 10，0 ≤ T ≤ 1000），第二行 k 個面額（1 ≤ 面額 ≤ 500，彼此不同）", outFmt: "一個整數",
+ ref: s => { const L = s.split("\n"), [k, T] = L[0].split(" ").map(Number), coins = L[1].split(" ").map(Number), INF = 1e9, dp = Array(T + 1).fill(INF); dp[0] = 0; for (let t = 1; t <= T; t++) for (const c of coins) if (c <= t && dp[t - c] + 1 < dp[t]) dp[t] = dp[t - c] + 1; return String(dp[T] >= INF ? -1 : dp[T]); },
+ inputs: ["3 11\n1 2 5", "1 3\n2", "2 0\n1 5", "3 6\n1 3 4", "4 100\n1 5 10 25", "3 999\n7 13 29", "5 1000\n3 7 11 19 23", "2 1000\n500 499", "1 1000\n1", "4 997\n2 4 6 8"]},
+
+{id: "a042", title: "0/1 背包", limit: 3000,
+ desc: "有 n 件物品，第 i 件的重量是 w、價值是 v，每件最多只能拿一次。背包最多可以承重 W。輸出能裝進背包的最大總價值。",
+ inFmt: "第一行 n W（1 ≤ n ≤ 50，1 ≤ W ≤ 1000），接下來 n 行，每行 w v（1 ≤ w ≤ 200，1 ≤ v ≤ 1000）", outFmt: "一個整數",
+ ref: s => { const L = s.split("\n"), [n, W] = L[0].split(" ").map(Number), dp = Array(W + 1).fill(0); for (let i = 1; i <= n; i++) { const [w, v] = L[i].split(" ").map(Number); for (let c = W; c >= w; c--) dp[c] = Math.max(dp[c], dp[c - w] + v); } return String(dp[W]); },
+ inputs: ["3 50\n10 60\n20 100\n30 120", "1 5\n6 10", "2 10\n5 3\n5 4", knap(10, 50), knap(30, 100), knap(50, 200), knap(50, 1000), knap(50, 1)]},
+
+{id: "a043", title: "最長共同子序列", limit: 3000,
+ desc: "輸入兩個只含小寫英文字母的字串 A 與 B，輸出它們的「最長共同子序列」的長度。子序列不必連續，但字元的先後順序要和原字串一致。例如 abcde 與 ace 的最長共同子序列是 ace，長度 3。",
+ inFmt: "兩行，分別是字串 A 與字串 B（長度 ≤ 200）", outFmt: "一個整數",
+ ref: s => { const [a, b] = s.split("\n"), n = a.length, m = b.length, dp = Array.from({length: n + 1}, () => Array(m + 1).fill(0)); for (let i = 1; i <= n; i++) for (let j = 1; j <= m; j++) dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]); return String(dp[n][m]); },
+ inputs: ["abcde\nace", "abc\nabc", "abc\ndef", "a\na", "aaaa\naa", `${str(200, "abc")}\n${str(200, "abc")}`, `${str(100, "ab")}\n${str(150, "ab")}`, `${str(200)}\n${str(200)}`, "x".repeat(200) + "\n" + "x".repeat(200)]},
+
+{id: "a044", title: "最長遞增子序列", limit: 3000,
+ desc: "輸入 n 個整數，求最長的「嚴格遞增子序列」的長度。子序列不必連續，但元素的先後順序要和原本一致。",
+ inFmt: "第一行 n（1 ≤ n ≤ 1000），第二行 n 個整數（|x| ≤ 10^9）", outFmt: "一個整數",
+ ref: s => { const a = s.split("\n")[1].split(" ").map(Number), dp = Array(a.length).fill(1); let best = 1; for (let i = 0; i < a.length; i++) { for (let j = 0; j < i; j++) if (a[j] < a[i] && dp[j] + 1 > dp[i]) dp[i] = dp[j] + 1; best = Math.max(best, dp[i]); } return String(best); },
+ inputs: ["6\n10 9 2 5 3 7", "1\n5", "5\n5 4 3 2 1", "5\n3 3 3 3 3", list(Array.from({length: 1000}, (_, i) => i)), list(arr(1000, -1e9, 1e9)), list(arr(1000, 0, 50)), list(arr(300, -100, 100))]},
+
+{id: "a045", title: "活動選擇", limit: 2000,
+ desc: "有 n 場活動，第 i 場從時間 s 開始、到時間 e 結束。同一個人不能同時參加時間重疊的活動，但是一場活動結束的時間剛好等於下一場開始的時間，是可以接著參加的。輸出最多可以參加幾場活動。",
+ inFmt: "第一行 n（1 ≤ n ≤ 1000），接下來 n 行，每行 s e（0 ≤ s < e ≤ 10^6）", outFmt: "一個整數",
+ ref: s => { const L = s.split("\n"), n = +L[0], a = []; for (let i = 1; i <= n; i++) a.push(L[i].split(" ").map(Number)); a.sort((x, y) => x[1] - y[1] || x[0] - y[0]); let cnt = 0, last = -1; for (const [st, en] of a) if (st >= last) { cnt++; last = en; } return String(cnt); },
+ inputs: ["3\n1 3\n2 4\n3 5", "1\n0 1", "4\n0 10\n0 10\n0 10\n10 20", acts(1000, 1e6, 1000), acts(1000, 1e6, 100000), acts(500, 50, 10), acts(100, 1000, 30), acts(1000, 3000, 3)]},
+
+{id: "a046", title: "木材切割", limit: 2000,
+ desc: "有 n 根木材，長度分別是 L1, L2, …, Ln（都是正整數）。要把它們切成「長度相同、而且是整數」的小段，總共至少需要 K 段。輸出每一小段最長可以是多少；如果無論如何都切不出 K 段，輸出 0。（每根木材切剩下的零頭不能拼起來使用。）",
+ inFmt: "第一行 n K（1 ≤ n ≤ 1000，1 ≤ K ≤ 10^6），第二行 n 個整數（1 ≤ Li ≤ 10^6）", outFmt: "一個整數",
+ ref: s => { const L = s.split("\n"), K = +L[0].split(" ")[1], w = L[1].split(" ").map(Number); let lo = 1, hi = Math.max(...w), ans = 0; while (lo <= hi) { const mid = Math.floor((lo + hi) / 2); let p = 0; for (const x of w) p += Math.floor(x / mid); if (p >= K) { ans = mid; lo = mid + 1; } else hi = mid - 1; } return String(ans); },
+ inputs: ["3 7\n20 11 13", "1 1\n7", "2 1000000\n5 5", "4 10\n8 9 10 11", wood(1000, 500000, 1, 1000000), wood(1000, 1000000, 1, 1000), wood(500, 2000, 1, 1000000), wood(1000, 1, 1, 1000000)]},
+
+// ======== 公式題（輸出要固定小數位數，練習數學公式與格式化輸出） ========
+{id: "a047", title: "畢氏定理", limit: 2000,
+ desc: "直角三角形的兩股長分別是 a 與 b，斜邊長 c 滿足 a² + b² = c²。輸入 a 與 b，輸出斜邊長 c，四捨五入到小數點後第 2 位。",
+ inFmt: "一行兩個正整數 a b（1 ≤ a, b ≤ 1000）", outFmt: "一個小數，固定顯示 2 位小數，例如 5.00",
+ ref: s => { const [a, b] = s.split(" ").map(Number); return Math.sqrt(a * a + b * b).toFixed(2); },
+ inputs: ["3 4", "1 1", "5 12", "8 15", "1000 1000", "1 1000", "7 24", "123 456", "10 10"]},
+
+{id: "a048", title: "直角三角形判斷", limit: 2000,
+ desc: "輸入三個正整數，代表三角形的三個邊長（順序不一定）。判斷這三邊能不能組成「直角三角形」，也就是最長邊的平方，等於另外兩邊的平方和。能就輸出 Yes，不能輸出 No。",
+ inFmt: "一行三個正整數（1 ≤ 邊長 ≤ 10000）", outFmt: "Yes 或 No",
+ ref: s => { const [a, b, c] = s.split(" ").map(Number).sort((x, y) => x - y); return a * a + b * b === c * c ? "Yes" : "No"; },
+ inputs: ["3 4 5", "5 4 3", "1 1 1", "6 8 10", "5 12 13", "2 3 4", "10 6 8", "1 2 3", "7 24 25", "100 60 80", "9999 9999 9999", "10000 10000 1"]},
+
+{id: "a049", title: "一元二次方程式", limit: 2000,
+ desc: "輸入一元二次方程式 ax² + bx + c = 0 的係數（a、c 都不是 0）。令判別式 D = b² - 4ac：D > 0 時，輸出兩個相異的實數解，由小到大，以空白分隔；D = 0 時，輸出唯一的解；D < 0 時，輸出 No real roots。所有解都四捨五入到小數點後第 2 位。",
+ inFmt: "一行三個整數 a b c（|a|、|b|、|c| ≤ 100，a ≠ 0，c ≠ 0）", outFmt: "依判別式輸出：兩個解（小的在前）、一個解，或 No real roots",
+ ref: s => { const [a, b, c] = s.split(" ").map(Number), D = b * b - 4 * a * c; if (D < 0) return "No real roots"; if (D === 0) return (-b / (2 * a)).toFixed(2); const r = Math.sqrt(D), x1 = (-b - r) / (2 * a), x2 = (-b + r) / (2 * a); return [Math.min(x1, x2), Math.max(x1, x2)].map(x => x.toFixed(2)).join(" "); },
+ inputs: ["1 -3 2", "1 2 1", "1 0 1", "1 -5 6", "2 3 -2", "-1 2 3", "3 2 1", "1 1 -1", "4 -4 1", "1 100 1", "-100 100 -1", quadIn(), quadIn(), quadIn(), quadIn()]},
+
+{id: "a050", title: "兩點距離", limit: 2000,
+ desc: "座標平面上有兩個點 (x1, y1) 與 (x2, y2)，輸出它們之間的距離，四捨五入到小數點後第 2 位。距離 = √((x1 - x2)² + (y1 - y2)²)。",
+ inFmt: "一行四個整數 x1 y1 x2 y2（|座標| ≤ 1000）", outFmt: "一個小數，固定顯示 2 位小數",
+ ref: s => { const [a, b, c, d] = s.split(" ").map(Number); return Math.sqrt((a - c) ** 2 + (b - d) ** 2).toFixed(2); },
+ inputs: ["0 0 3 4", "1 1 1 1", "-1 -1 2 3", "0 0 1 1", "-1000 -1000 1000 1000", "5 5 5 -5", "123 -456 -789 12", "0 0 -6 8", "3 7 3 8"]},
+
+{id: "a051", title: "圓的面積與周長", limit: 2000,
+ desc: "輸入圓的半徑 r，輸出圓的面積與圓周長，兩個數字以空白分隔，各自四捨五入到小數點後第 2 位。圓周率請使用 3.14159。",
+ inFmt: "一個正整數 r（1 ≤ r ≤ 1000）", outFmt: "一行兩個小數：面積 周長",
+ ref: s => { const r = +s, PI = 3.14159; return `${(PI * r * r).toFixed(2)} ${(2 * PI * r).toFixed(2)}`; },
+ inputs: ["5", "1", "10", "100", "3", "7", "25", "999", "1000", "37"]},
+
+{id: "a052", title: "溫度轉換", limit: 2000,
+ desc: "輸入攝氏溫度 C（整數），輸出對應的華氏溫度 F，公式是 F = C × 9 / 5 + 32，四捨五入到小數點後第 1 位。",
+ inFmt: "一個整數 C（-100 ≤ C ≤ 100）", outFmt: "一個小數，固定顯示 1 位小數",
+ ref: s => (+s * 9 / 5 + 32).toFixed(1),
+ inputs: ["0", "100", "-40", "37", "-100", "25", "-17", "-18", "1"]},
+
+{id: "a053", title: "等差數列", limit: 2000,
+ desc: "等差數列的首項是 a、公差是 d。輸入 a、d 與 n，輸出這個數列的第 n 項，以及前 n 項的總和，兩個整數以空白分隔。",
+ inFmt: "一行三個整數 a d n（|a|, |d| ≤ 10^6，1 ≤ n ≤ 10^6）", outFmt: "一行兩個整數：第 n 項 前 n 項和",
+ ref: s => { const [a, d, n] = s.split(" ").map(BigInt); return `${a + (n - 1n) * d} ${n * (2n * a + (n - 1n) * d) / 2n}`; },
+ inputs: ["1 1 10", "5 3 1", "-4 -3 7", "0 0 1000000", "1000000 1000000 1000000", "-1000000 1000000 1000000", "7 -2 20", "100 5 1", "-1000000 -1000000 1000000"]},
+
+{id: "a054", title: "複利本利和", limit: 2000,
+ desc: "存入本金 P 元，年利率 r%，每年複利一次（每年的利息會加進本金，下一年再一起計算利息）。輸入 P、r、n，輸出 n 年後的本利和，四捨五入到小數點後第 2 位。",
+ inFmt: "一行三個整數 P r n（1 ≤ P ≤ 10^6，1 ≤ r ≤ 20，1 ≤ n ≤ 30）", outFmt: "一個小數，固定顯示 2 位小數",
+ ref: s => { const [P, r, n] = s.split(" ").map(Number); return (P * Math.pow(1 + r / 100, n)).toFixed(2); },
+ inputs: ["1000 5 10", "100 1 1", "1000000 20 30", "1 10 5", "50000 3 20", "2500 7 12", "123456 12 8", "999999 15 25", "10 2 30"]},
+
+{id: "a055", title: "二元一次聯立方程式", limit: 2000,
+ desc: "解聯立方程式：a1·x + b1·y = c1 與 a2·x + b2·y = c2。輸入六個係數，保證有唯一解（也就是 a1·b2 - a2·b1 不為 0），而且 x、y 都不是 0。輸出 x 與 y，四捨五入到小數點後第 2 位，以空白分隔。",
+ inFmt: "兩行：第一行 a1 b1 c1，第二行 a2 b2 c2（|係數| ≤ 100）", outFmt: "一行兩個小數：x y",
+ ref: s => { const [r1, r2] = s.split("\n"), [a1, b1, c1] = r1.split(" ").map(Number), [a2, b2, c2] = r2.split(" ").map(Number), D = a1 * b2 - a2 * b1; return `${((c1 * b2 - c2 * b1) / D).toFixed(2)} ${((a1 * c2 - a2 * c1) / D).toFixed(2)}`; },
+ inputs: ["1 1 3\n1 -1 1", "2 3 8\n1 -1 -1", "3 -2 7\n1 4 -1", "1 2 5\n3 4 6", linIn(), linIn(), linIn(), linIn()]}
+
+
 ];
 
 // 產生長度 n（偶數）的合法括號字串
@@ -211,15 +365,67 @@ function pl(a, t) { return `${a.length} ${t}\n${a.join(" ")}`; }
 function rot(n, k) { return `${n} ${k}\n${arr(n, -1000, 1000).join(" ")}`; }
 function words(n) { return Array.from({length: n}, () => str(ri(1, 3), "abc")).join(" "); }
 
+// ---- APCS 風格題目用的測資產生器 ----
+function pbal(n) {                       // 長度 n（偶數）的合法括號字串，只含 ( )
+  let s = "", d = 0;
+  for (let i = 0; i < n; i++) {
+    if (d > 0 && (R() < 0.5 || d >= n - i)) { s += ")"; d--; } else { s += "("; d++; }
+  }
+  return s;
+}
+function mat(n, m, lo, hi) { return `${n} ${m}\n` + Array.from({length: n}, () => arr(m, lo, hi).join(" ")).join("\n"); }
+function grid01(n, m, p) { return `${n} ${m}\n` + Array.from({length: n}, () => Array.from({length: m}, () => R() < p ? "1" : "0").join("")).join("\n"); }
+function maze(n, m, p) {
+  const g = Array.from({length: n}, () => Array.from({length: m}, () => R() < p ? "#" : "."));
+  g[0][0] = "S"; g[n - 1][m - 1] = "E";
+  return `${n} ${m}\n` + g.map(r => r.join("")).join("\n");
+}
+function snake(n, m) {                   // 蛇形走廊：一定要繞很遠才走得到終點
+  const g = Array.from({length: n}, (_, i) => Array.from({length: m}, () => i % 2 ? "#" : "."));
+  for (let i = 1; i < n; i += 2) g[i][i % 4 === 1 ? m - 1 : 0] = ".";
+  g[0][0] = "S"; g[n - 1][m - 1] = "E";
+  return `${n} ${m}\n` + g.map(r => r.join("")).join("\n");
+}
+function knap(n, W) { return `${n} ${W}\n` + Array.from({length: n}, () => `${ri(1, 200)} ${ri(1, 1000)}`).join("\n"); }
+function acts(n, T, maxLen) {
+  return `${n}\n` + Array.from({length: n}, () => { const s = ri(0, T - 1); return `${s} ${Math.min(T, s + ri(1, maxLen))}`; }).join("\n");
+}
+function wood(n, K, lo, hi) { return `${n} ${K}\n${arr(n, lo, hi).join(" ")}`; }
+
+// ---- 公式題用的測資產生器：避開「四捨五入剛好在邊界」與「-0.00」，讓各種寫法算出來的結果一致 ----
+function nearTie(x) { const f = (Math.abs(x) * 100) % 1; return Math.abs(f - 0.5) < 1e-3; }
+function quadIn() {
+  for (;;) {
+    const a = ri(-30, 30), b = ri(-60, 60), c = ri(-30, 30);
+    if (!a || !c) continue;
+    const D = b * b - 4 * a * c;
+    if (D > 0) {
+      const r = Math.sqrt(D), x1 = (-b - r) / (2 * a), x2 = (-b + r) / (2 * a);
+      if (nearTie(x1) || nearTie(x2) || Math.abs(x1) < 0.01 || Math.abs(x2) < 0.01) continue;
+    } else if (D === 0 && nearTie(-b / (2 * a))) continue;
+    return `${a} ${b} ${c}`;
+  }
+}
+function linIn() {
+  for (;;) {
+    const v = arr(6, -20, 20), [a1, b1, c1, a2, b2, c2] = v, D = a1 * b2 - a2 * b1;
+    const nx = c1 * b2 - c2 * b1, ny = a1 * c2 - a2 * c1;
+    if (!D || !nx || !ny || nearTie(nx / D) || nearTie(ny / D)) continue;
+    return `${a1} ${b1} ${c1}\n${a2} ${b2} ${c2}`;
+  }
+}
+
 // 難度：1 簡單（預設）、2 中等、3 困難
 const LV = {a004: 2, a006: 2, a008: 2, a013: 2, a015: 2, a016: 2, a018: 2, a020: 2, a017: 3, a019: 3,
-  a021: 2, a022: 2, a023: 2, a025: 2, a027: 3, a028: 2, a029: 2};
+  a021: 2, a022: 2, a023: 2, a025: 2, a027: 3, a028: 2, a029: 2,
+  a033: 2, a034: 2, a035: 2, a036: 3, a037: 3, a038: 2, a039: 2, a040: 3, a041: 3, a042: 3, a043: 3, a044: 3, a045: 3, a046: 3,
+  a048: 1, a049: 2, a050: 1, a051: 1, a053: 2, a054: 2, a055: 2};
 
 // 題目頁顯示的「範例」。預設用第一筆測資；如果第一筆是 0、1 這種邊界值（範例會很沒意義），就在這裡另外指定。
-const SAMPLE = {a004: "17", a005: "10", a009: "5", a012: "3", a013: "12345", a015: "10", a017: "12", a019: "([]{})", a021: "10", a029: "5", a030: "5"};
+const SAMPLE = {a004: "17", a005: "10", a009: "5", a012: "3", a013: "12345", a015: "10", a017: "12", a019: "([]{})", a021: "10", a029: "5", a030: "5", a032: "(()(()))", a035: "4", a038: "3", a039: "3", a040: "6", a051: "5", a052: "37"};
 
 export const PROBLEMS = RAW.map(p => {
   const tests = p.inputs.map(i => [i, p.ref(i)]);
   const si = SAMPLE[p.id] || p.inputs[0];
-  return {...p, tests, sample: [si, p.ref(si)], level: LV[p.id] || 1};
+  return {...p, tests, sample: [si, p.ref(si)], level: LV[p.id] || 1, group: parseInt(p.id.slice(1), 10) > 46 ? "formula" : parseInt(p.id.slice(1), 10) > 30 ? "apcs" : "basic"};
 });

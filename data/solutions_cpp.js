@@ -276,5 +276,298 @@ a030: S(`int main() {
         else if (i % 5 == 0) cout << "Buzz\\n";
         else cout << i << "\\n";
     }
+}`),
+a031: S(`int main() {
+    int n, x, mx = 0, mn = 100, fail = 0, sum = 0;
+    cin >> n;
+    for (int i = 0; i < n; i++) {
+        cin >> x;
+        mx = max(mx, x);
+        mn = min(mn, x);
+        sum += x;
+        if (x < 60) fail++;
+    }
+    cout << mx << " " << mn << " " << sum / n << " " << fail << endl;
+}`),
+a032: S(`int main() {
+    string s;
+    cin >> s;
+    int d = 0, best = 0;
+    for (char c : s) {
+        if (c == '(') best = max(best, ++d);
+        else d--;
+    }
+    cout << best << endl;
+}`),
+a033: S(`int main() {
+    int n;
+    cin >> n;
+    vector<long long> a(n);
+    for (auto &x : a) cin >> x;
+    int cnt = 0;
+    for (int i = 0; i < n; i++)
+        for (int j = i + 1; j < n; j++)
+            if (a[i] > a[j]) cnt++;
+    cout << cnt << endl;
+}`, "最多 n(n-1)/2 = 499500 組，int 就夠；數字本身最大 10^9，所以陣列用 long long 比較保險。"),
+a034: S(`int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<vector<int>> a(n, vector<int>(m));
+    for (auto &row : a)
+        for (int &x : row) cin >> x;
+    for (int j = 0; j < m; j++)
+        for (int i = n - 1; i >= 0; i--) cout << a[i][j] << (i > 0 ? " " : "\\n");
+}`),
+a035: S(`int main() {
+    int n;
+    cin >> n;
+    vector<vector<int>> g(n, vector<int>(n, 0));
+    int dr[4] = {0, 1, 0, -1}, dc[4] = {1, 0, -1, 0};
+    int r = 0, c = 0, d = 0;
+    for (int k = 1; k <= n * n; k++) {
+        g[r][c] = k;
+        int nr = r + dr[d], nc = c + dc[d];
+        if (nr < 0 || nr >= n || nc < 0 || nc >= n || g[nr][nc] != 0) {   // 出界或填過就右轉
+            d = (d + 1) % 4;
+            nr = r + dr[d];
+            nc = c + dc[d];
+        }
+        r = nr;
+        c = nc;
+    }
+    for (auto &row : g)
+        for (int j = 0; j < n; j++) cout << row[j] << (j + 1 < n ? " " : "\\n");
+}`),
+a036: S(`int n, m;
+vector<string> g;
+
+void dfs(int r, int c) {
+    if (r < 0 || r >= n || c < 0 || c >= m || g[r][c] != '1') return;
+    g[r][c] = '0';                      // 淹掉，不會重複走
+    dfs(r + 1, c);
+    dfs(r - 1, c);
+    dfs(r, c + 1);
+    dfs(r, c - 1);
+}
+
+int main() {
+    cin >> n >> m;
+    g.resize(n);
+    for (auto &row : g) cin >> row;
+    int cnt = 0;
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < m; j++)
+            if (g[i][j] == '1') {
+                cnt++;
+                dfs(i, j);
+            }
+    cout << cnt << endl;
+}`, "這裡用遞迴 DFS，n、m ≤ 20 不會爆；格子很大（例如 1000 × 1000）時遞迴會太深，要改用 BFS 或自己用 stack。"),
+a037: S(`int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<string> g(n);
+    for (auto &row : g) cin >> row;
+    vector<vector<int>> dist(n, vector<int>(m, -1));
+    queue<pair<int, int>> q;
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < m; j++)
+            if (g[i][j] == 'S') {
+                dist[i][j] = 0;
+                q.push({i, j});
+            }
+    int dr[4] = {1, -1, 0, 0}, dc[4] = {0, 0, 1, -1}, ans = -1;
+    while (!q.empty()) {
+        auto [r, c] = q.front();
+        q.pop();
+        if (g[r][c] == 'E') { ans = dist[r][c]; break; }
+        for (int d = 0; d < 4; d++) {
+            int nr = r + dr[d], nc = c + dc[d];
+            if (nr >= 0 && nr < n && nc >= 0 && nc < m && g[nr][nc] != '#' && dist[nr][nc] == -1) {
+                dist[nr][nc] = dist[r][c] + 1;
+                q.push({nr, nc});
+            }
+        }
+    }
+    cout << ans << endl;
+}`),
+a038: S(`void hanoi(int n, char a, char c, char b) {
+    if (n == 0) return;
+    hanoi(n - 1, a, b, c);
+    cout << a << " " << c << "\\n";
+    hanoi(n - 1, b, c, a);
+}
+
+int main() {
+    int n;
+    cin >> n;
+    hanoi(n, 'A', 'C', 'B');
+}`),
+a039: S(`int main() {
+    int n;
+    cin >> n;
+    vector<int> p(n);
+    iota(p.begin(), p.end(), 1);
+    do {
+        for (int i = 0; i < n; i++) cout << p[i] << (i + 1 < n ? " " : "\\n");
+    } while (next_permutation(p.begin(), p.end()));
+}`, "next_permutation 會依字典順序產生「下一個」排列，所以一開始要先排好序（iota 填入 1, 2, …, n 已經是由小到大）。想練習回溯法，可以參考 Python 版的 DFS 寫法。"),
+a040: S(`int n;
+bool col[20], d1[40], d2[40];
+
+int place(int r) {
+    if (r == n) return 1;
+    int total = 0;
+    for (int c = 0; c < n; c++) {
+        if (col[c] || d1[r - c + n] || d2[r + c]) continue;
+        col[c] = d1[r - c + n] = d2[r + c] = true;
+        total += place(r + 1);
+        col[c] = d1[r - c + n] = d2[r + c] = false;      // 回溯
+    }
+    return total;
+}
+
+int main() {
+    cin >> n;
+    cout << place(0) << endl;
+}`, "r - c 可能是負數，所以用 r - c + n 當索引，讓它變成正的。"),
+a041: S(`int main() {
+    int k, T;
+    cin >> k >> T;
+    vector<int> coins(k);
+    for (int &c : coins) cin >> c;
+    const int INF = 1e9;
+    vector<int> dp(T + 1, INF);
+    dp[0] = 0;
+    for (int t = 1; t <= T; t++)
+        for (int c : coins)
+            if (c <= t && dp[t - c] + 1 < dp[t]) dp[t] = dp[t - c] + 1;
+    cout << (dp[T] >= INF ? -1 : dp[T]) << endl;
+}`, "INF 設成 10^9，加 1 之後也不會溢位；最後要判斷是否還是 INF（代表湊不出來）。"),
+a042: S(`int main() {
+    int n, W;
+    cin >> n >> W;
+    vector<int> dp(W + 1, 0);
+    for (int i = 0; i < n; i++) {
+        int w, v;
+        cin >> w >> v;
+        for (int c = W; c >= w; c--) dp[c] = max(dp[c], dp[c - w] + v);   // 容量由大到小
+    }
+    cout << dp[W] << endl;
+}`),
+a043: S(`int main() {
+    string a, b;
+    cin >> a >> b;
+    int n = a.size(), m = b.size();
+    vector<vector<int>> dp(n + 1, vector<int>(m + 1, 0));
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= m; j++)
+            dp[i][j] = a[i - 1] == b[j - 1] ? dp[i - 1][j - 1] + 1 : max(dp[i - 1][j], dp[i][j - 1]);
+    cout << dp[n][m] << endl;
+}`),
+a044: S(`int main() {
+    int n;
+    cin >> n;
+    vector<long long> a(n);
+    for (auto &x : a) cin >> x;
+    vector<int> dp(n, 1);
+    int best = 1;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < i; j++)
+            if (a[j] < a[i]) dp[i] = max(dp[i], dp[j] + 1);
+        best = max(best, dp[i]);
+    }
+    cout << best << endl;
+}`),
+a045: S(`int main() {
+    int n;
+    cin >> n;
+    vector<pair<int, int>> acts(n);           // (結束時間, 開始時間)：sort 就會先依結束時間排
+    for (auto &p : acts) cin >> p.second >> p.first;
+    sort(acts.begin(), acts.end());
+    int cnt = 0, last = -1;
+    for (auto &p : acts) {
+        if (p.second >= last) {
+            cnt++;
+            last = p.first;
+        }
+    }
+    cout << cnt << endl;
+}`, "把 pair 的第一個放「結束時間」，sort 預設就會先比結束時間，不用自己寫比較函式；也可以用 lambda 自訂比較。"),
+a046: S(`int main() {
+    int n;
+    long long K;
+    cin >> n >> K;
+    vector<int> wood(n);
+    for (int &w : wood) cin >> w;
+    int lo = 1, hi = *max_element(wood.begin(), wood.end()), ans = 0;
+    while (lo <= hi) {
+        int mid = (lo + hi) / 2;
+        long long pieces = 0;
+        for (int w : wood) pieces += w / mid;
+        if (pieces >= K) { ans = mid; lo = mid + 1; }
+        else hi = mid - 1;
+    }
+    cout << ans << endl;
+}`, "總段數最多 1000 × 10^6 = 10^9，K 也可到 10^6，累加用 long long 比較保險。")
+,
+a047: S(`int main() {
+    double a, b;
+    cin >> a >> b;
+    cout << fixed << setprecision(2) << sqrt(a * a + b * b) << endl;
+}`, "fixed 加上 setprecision(2) 才是「小數點後 2 位」；只寫 setprecision(2) 是「總共 2 位有效數字」。sqrt 在 <cmath>。"),
+a048: S(`int main() {
+    long long v[3];
+    cin >> v[0] >> v[1] >> v[2];
+    sort(v, v + 3);
+    cout << (v[0] * v[0] + v[1] * v[1] == v[2] * v[2] ? "Yes" : "No") << endl;
+}`),
+a049: S(`int main() {
+    int a, b, c;
+    cin >> a >> b >> c;
+    int d = b * b - 4 * a * c;
+    cout << fixed << setprecision(2);
+    if (d < 0) cout << "No real roots" << endl;
+    else if (d == 0) cout << -b / (2.0 * a) << endl;
+    else {
+        double r = sqrt((double)d);
+        double x1 = (-b - r) / (2 * a), x2 = (-b + r) / (2 * a);
+        cout << min(x1, x2) << " " << max(x1, x2) << endl;
+    }
+}`, "判別式用 int 算就夠（|b²| ≤ 10^4、|4ac| ≤ 4 × 10^4）；除法要有一邊是 double，否則會變成整數除法。"),
+a050: S(`int main() {
+    double x1, y1, x2, y2;
+    cin >> x1 >> y1 >> x2 >> y2;
+    cout << fixed << setprecision(2) << hypot(x1 - x2, y1 - y2) << endl;
+}`),
+a051: S(`int main() {
+    int r;
+    cin >> r;
+    const double PI = 3.14159;
+    cout << fixed << setprecision(2) << PI * r * r << " " << 2 * PI * r << endl;
+}`),
+a052: S(`int main() {
+    int c;
+    cin >> c;
+    cout << fixed << setprecision(1) << c * 9 / 5.0 + 32 << endl;
+}`, "整數的 c * 9 / 5 會是整數除法（會被捨去小數）。把 5 寫成 5.0，結果才會是小數。"),
+a053: S(`int main() {
+    long long a, d, n;
+    cin >> a >> d >> n;
+    cout << a + (n - 1) * d << " " << n * (2 * a + (n - 1) * d) / 2 << endl;
+}`, "前 n 項和最大約 5 × 10^17，超過 int 很多，要用 long long（上限約 9.2 × 10^18）。"),
+a054: S(`int main() {
+    double p, r;
+    int n;
+    cin >> p >> r >> n;
+    cout << fixed << setprecision(2) << p * pow(1 + r / 100, n) << endl;
+}`),
+a055: S(`int main() {
+    int a1, b1, c1, a2, b2, c2;
+    cin >> a1 >> b1 >> c1 >> a2 >> b2 >> c2;
+    double d = a1 * b2 - a2 * b1;
+    cout << fixed << setprecision(2) << (c1 * b2 - c2 * b1) / d << " " << (a1 * c2 - a2 * c1) / d << endl;
 }`)
+
 };

@@ -24,6 +24,13 @@ const badges = s => {
 };
 const langText = s => passedLangs(s).length ? `（${passedLangs(s).map(k => LANG_NAME[k]).join("、")}）` : "";
 
+// 題目分類：基礎 / 公式 / APCS 風格（記住上次選的）
+const GROUPS = [["all", "全部"], ["basic", "基礎"], ["formula", "公式"], ["apcs", "APCS"]];
+const GROUP_NAME = {basic: "基礎", formula: "公式題", apcs: "APCS 風格"};
+let group = "all";
+try { group = localStorage.getItem("mj-group") || "all"; } catch (e) {}
+const filterBar = () => '<div class="seg">' + GROUPS.map(([g, n]) => `<a data-g="${g}" class="${g === group ? "on" : ""}">${n}</a>`).join("") + "</div>";
+
 let refreshBar = () => {};
 const drafts = {};   // 這次開著網頁期間，每題每種語言正在編輯的內容（切換語言、換題目再回來都還在）
 let user = null, subs = {}, cur = PROBLEMS.find(p => p.id === location.hash.slice(1)) || PROBLEMS[0], note = "", site = {}, isAdm = false;
@@ -53,12 +60,17 @@ onUser(async u => {
 function renderList() {
   const done = PROBLEMS.filter(p => subs[p.id] && subs[p.id].solved).length;
   $("#stat").innerHTML = `已通過 <b>${done}</b> / ${PROBLEMS.length}<div class="bar"><i style="width:${done / PROBLEMS.length * 100}%"></i></div>`;
-  $("#list").innerHTML = PROBLEMS.map(p => {
+  $("#list").innerHTML = filterBar() + PROBLEMS.filter(p => group === "all" || p.group === group).map(p => {
     const s = subs[p.id];
     const m = s ? (s.solved ? '<span class="ac">✔</span>' + badges(s) : '<span class="wa">✘</span>') : "";
     return `<a data-id="${p.id}" class="${p.id === cur.id ? "on" : ""}${problemClosed(site, p.id) ? " off" : ""}"><span>${p.id} ${esc(p.title)}</span><span><span class="lv lv${p.level}">${LV[p.level]}</span> ${problemClosed(site, p.id) ? "🔒" : m}</span></a>`;
   }).join("");
-  document.querySelectorAll("#list a").forEach(a => a.onclick = () => show(a.dataset.id));
+  document.querySelectorAll("#list a[data-id]").forEach(a => a.onclick = () => show(a.dataset.id));
+  document.querySelectorAll("#list .seg a").forEach(a => a.onclick = () => {
+    group = a.dataset.g;
+    try { localStorage.setItem("mj-group", group); } catch (e) {}
+    renderList();
+  });
 }
 
 function show(id) {
@@ -71,7 +83,7 @@ function show(id) {
   }
   const warn = shut ? '<div class="banner">這一題對一般使用者關閉中（你是管理員，仍可使用）</div>' : "";
   $("#view").innerHTML = `${note}${warn}
-    <div class="ttl"><h2>${cur.id}：${esc(cur.title)} <span class="lv lv${cur.level}">${LV[cur.level]}</span></h2><button class="ans" id="ans">💡 參考答案</button></div>
+    <div class="ttl"><h2>${cur.id}：${esc(cur.title)} <span class="lv lv${cur.level}">${LV[cur.level]}</span>${cur.group !== "basic" ? ` <span class="grp">${GROUP_NAME[cur.group]}</span>` : ""}</h2><button class="ans" id="ans">💡 參考答案</button></div>
     <small>時間限制 ${cur.limit / 1000} 秒　｜　共 ${cur.tests.length} 筆測資${s ? `　｜　你的紀錄：${s.solved ? "已通過" + langText(s) : "尚未通過"}，嘗試 ${s.tries || 1} 次` : ""}</small>
     <p>${esc(cur.desc)}</p>
     <b>輸入說明</b><div class="box">${esc(cur.inFmt)}</div>

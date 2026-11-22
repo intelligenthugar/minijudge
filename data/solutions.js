@@ -146,5 +146,217 @@ for i in range(1, n + 1):
     elif i % 5 == 0:
         print("Buzz")
     else:
-        print(i)`}
+        print(i)`},
+a031: {exp: "平均要「無條件捨去」，分數都是非負整數，所以用整數除法 sum(a) // n 就對了。最高、最低、不及格人數都只要掃過一遍，時間 O(n)。", py: `n = int(input())
+a = list(map(int, input().split()))
+print(max(a), min(a), sum(a) // n, sum(1 for x in a if x < 60))`},
+a032: {exp: "遇到 ( 深度加 1、遇到 ) 深度減 1，過程中出現過的最大深度就是答案。因為保證括號合法，深度不會變成負的。時間 O(n)。", py: `s = input()
+depth = best = 0
+for c in s:
+    if c == "(":
+        depth += 1
+        best = max(best, depth)
+    else:
+        depth -= 1
+print(best)`},
+a033: {exp: "雙層迴圈列舉所有 i < j 的配對，數出 a[i] > a[j] 的個數。n ≤ 1000 時約 50 萬次比較就夠了。更快的做法是在合併排序（merge sort）的過程中順便計算，時間 O(n log n)。", py: `n = int(input())
+a = list(map(int, input().split()))
+cnt = 0
+for i in range(n):
+    for j in range(i + 1, n):
+        if a[i] > a[j]:
+            cnt += 1
+print(cnt)`},
+a034: {exp: "旋轉後的第 j 列，就是原矩陣第 j 行「由下往上」讀出來的結果。外層迴圈跑 j，內層迴圈讓 i 從 n-1 倒數到 0，直接輸出即可。", py: `n, m = map(int, input().split())
+a = [input().split() for _ in range(n)]
+for j in range(m):
+    print(" ".join(a[i][j] for i in range(n - 1, -1, -1)))`},
+a035: {exp: "用方向陣列控制走向（右、下、左、上）：往前一格如果出界或已經填過，就右轉（d + 1）。每個格子剛好填一次，時間 O(n²)。", py: `n = int(input())
+g = [[0] * n for _ in range(n)]
+dr, dc = [0, 1, 0, -1], [1, 0, -1, 0]
+r = c = d = 0
+for k in range(1, n * n + 1):
+    g[r][c] = k
+    nr, nc = r + dr[d], c + dc[d]
+    if not (0 <= nr < n and 0 <= nc < n and g[nr][nc] == 0):
+        d = (d + 1) % 4              # 撞牆或撞到填過的格子，就右轉
+        nr, nc = r + dr[d], c + dc[d]
+    r, c = nr, nc
+for row in g:
+    print(*row)`},
+a036: {exp: "掃描每個格子，遇到還沒走過的陸地就算一座新島，並用 DFS（這裡用堆疊）把整座島「淹掉」（改成 0），之後就不會重複計算。每個格子最多處理一次，O(nm)。遞迴版的 DFS 在島很大時，可能超過 Python 的遞迴深度上限，用堆疊比較安全。", py: `n, m = map(int, input().split())
+g = [list(input()) for _ in range(n)]
+cnt = 0
+for i in range(n):
+    for j in range(m):
+        if g[i][j] == "1":
+            cnt += 1
+            g[i][j] = "0"
+            stack = [(i, j)]
+            while stack:
+                r, c = stack.pop()
+                for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nr, nc = r + dr, c + dc
+                    if 0 <= nr < n and 0 <= nc < m and g[nr][nc] == "1":
+                        g[nr][nc] = "0"
+                        stack.append((nr, nc))
+print(cnt)`},
+a037: {exp: "「最少步數」（每一步成本相同）要用 BFS：從起點一層一層往外擴張，第一次碰到終點時走的步數就是最少步數。dist 陣列同時記錄「有沒有走過」與「走了幾步」。走不到終點時佇列會被清空，答案維持 -1。時間 O(nm)。", py: `from collections import deque
+
+n, m = map(int, input().split())
+g = [input() for _ in range(n)]
+for i in range(n):
+    for j in range(m):
+        if g[i][j] == "S":
+            sr, sc = i, j
+dist = [[-1] * m for _ in range(n)]
+dist[sr][sc] = 0
+q = deque([(sr, sc)])
+ans = -1
+while q:
+    r, c = q.popleft()
+    if g[r][c] == "E":
+        ans = dist[r][c]
+        break
+    for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        nr, nc = r + dr, c + dc
+        if 0 <= nr < n and 0 <= nc < m and g[nr][nc] != "#" and dist[nr][nc] == -1:
+            dist[nr][nc] = dist[r][c] + 1
+            q.append((nr, nc))
+print(ans)`},
+a038: {exp: "把 n 個盤子從 A 搬到 C：先把上面 n-1 個搬到 B（借用 C），再把最大的從 A 搬到 C，最後把 n-1 個從 B 搬到 C（借用 A）。總步數是 2^n - 1。這是遞迴最經典的例子：相信「n-1 個盤子的搬法」已經會了，只要處理最大的那一個。", py: `def hanoi(n, a, c, b):
+    if n == 0:
+        return
+    hanoi(n - 1, a, b, c)
+    print(a, c)
+    hanoi(n - 1, b, c, a)
+
+hanoi(int(input()), "A", "C", "B")`},
+a039: {exp: "回溯法：每一層從「還沒用過」的數字中挑一個放進去，遞迴處理下一個位置，回來之後要「撤銷選擇」（pop 並把 used 設回 False）。因為每層都從小到大挑，輸出自然就是字典順序。Python 也可以直接用 itertools.permutations。", py: `n = int(input())
+used = [False] * (n + 1)
+cur = []
+
+def dfs():
+    if len(cur) == n:
+        print(*cur)
+        return
+    for x in range(1, n + 1):
+        if not used[x]:
+            used[x] = True
+            cur.append(x)
+            dfs()
+            cur.pop()
+            used[x] = False
+
+dfs()`},
+a040: {exp: "一列放一個皇后，逐列嘗試每個欄位。用三個集合記錄已被佔用的「欄」、「左上到右下的斜線（r - c 相同）」與「右上到左下的斜線（r + c 相同）」，衝突就跳過。往下遞迴回來之後，要把剛放的皇后移除（回溯）。n = 8 時有 92 種放法。", py: `n = int(input())
+cols, d1, d2 = set(), set(), set()
+
+def place(r):
+    if r == n:
+        return 1
+    total = 0
+    for c in range(n):
+        if c in cols or r - c in d1 or r + c in d2:
+            continue
+        cols.add(c); d1.add(r - c); d2.add(r + c)
+        total += place(r + 1)
+        cols.remove(c); d1.remove(r - c); d2.remove(r + c)
+    return total
+
+print(place(0))`},
+a041: {exp: "dp[t] 表示湊出金額 t 所需的最少硬幣數：dp[t] = min(dp[t - c] + 1)。這題不能用貪心（先拿最大面額）：面額 1、3、4 要湊 6，貪心拿 4 + 1 + 1 要 3 枚，但 3 + 3 只要 2 枚。時間 O(kT)。", py: `k, T = map(int, input().split())
+coins = list(map(int, input().split()))
+INF = float("inf")
+dp = [0] + [INF] * T
+for t in range(1, T + 1):
+    for c in coins:
+        if c <= t and dp[t - c] + 1 < dp[t]:
+            dp[t] = dp[t - c] + 1
+print(dp[T] if dp[T] != INF else -1)`},
+a042: {exp: "dp[c] 表示「容量 c 時的最大價值」。一件一件物品處理，容量要「由大到小」更新，才能保證每件物品最多只用一次（由小到大更新就變成每件可以無限拿）。時間 O(nW)。", py: `n, W = map(int, input().split())
+dp = [0] * (W + 1)
+for _ in range(n):
+    w, v = map(int, input().split())
+    for c in range(W, w - 1, -1):        # 容量由大到小，每件物品就不會被重複拿
+        dp[c] = max(dp[c], dp[c - w] + v)
+print(dp[W])`},
+a043: {exp: "dp[i][j] 表示 A 的前 i 個字元與 B 的前 j 個字元的 LCS 長度。如果最後一個字元相同，就接在 dp[i-1][j-1] 後面加 1；不同的話，取「A 少看一個」或「B 少看一個」比較大的那個。時間 O(nm)。", py: `a = input()
+b = input()
+n, m = len(a), len(b)
+dp = [[0] * (m + 1) for _ in range(n + 1)]
+for i in range(1, n + 1):
+    for j in range(1, m + 1):
+        if a[i - 1] == b[j - 1]:
+            dp[i][j] = dp[i - 1][j - 1] + 1
+        else:
+            dp[i][j] = max(dp[i - 1][j], dp[i][j - 1])
+print(dp[n][m])`},
+a044: {exp: "dp[i] 表示「以 a[i] 結尾」的最長遞增子序列長度：看前面每一個比 a[i] 小的 a[j]，取 dp[j] + 1 的最大值。這樣是 O(n²)，n ≤ 1000 剛好夠用；進階可以用二分搜尋維護一個「各長度最小結尾」的陣列，做到 O(n log n)。", py: `n = int(input())
+a = list(map(int, input().split()))
+dp = [1] * n
+for i in range(n):
+    for j in range(i):
+        if a[j] < a[i] and dp[j] + 1 > dp[i]:
+            dp[i] = dp[j] + 1
+print(max(dp))`},
+a045: {exp: "貪心：每次都選「最早結束」而且和已選活動不衝突的那一場，這樣留給後面的時間最多。先依結束時間排序（這裡用 lambda 當排序的依據），再一次掃過。結束時間剛好等於開始時間可以接著參加，所以條件是 s >= last。排序 O(n log n)。", py: `n = int(input())
+acts = [tuple(map(int, input().split())) for _ in range(n)]
+acts.sort(key=lambda x: x[1])           # 依結束時間排序
+cnt, last = 0, -1
+for s, e in acts:
+    if s >= last:
+        cnt += 1
+        last = e
+print(cnt)`},
+a046: {exp: "「切得越短，能切出的段數越多」——有這種單調性，就可以對「答案」做二分搜尋：猜一個長度 mid，算 sum(w // mid) 是否 ≥ K；夠，就試試更長的；不夠，就縮短。只要檢查約 log₂(10^6) ≈ 20 次，每次 O(n)。", py: `n, K = map(int, input().split())
+wood = list(map(int, input().split()))
+lo, hi, ans = 1, max(wood), 0
+while lo <= hi:
+    mid = (lo + hi) // 2
+    if sum(w // mid for w in wood) >= K:
+        ans = mid                       # 可以，再試試更長的
+        lo = mid + 1
+    else:
+        hi = mid - 1
+print(ans)`}
+,
+a047: {exp: "斜邊 c = √(a² + b²)。Python 可以用 math.sqrt，或寫成 (a * a + b * b) ** 0.5，也可以直接用 math.hypot(a, b)。輸出固定 2 位小數要用格式化：f 字串裡的 :.2f。", py: `import math
+
+a, b = map(int, input().split())
+print(f"{math.sqrt(a * a + b * b):.2f}")`},
+a048: {exp: "先排序，最後一個就是最長邊；再用「整數」的平方來比較 a² + b² == c²。不要用開根號再比較，浮點數會有誤差。", py: `a, b, c = sorted(map(int, input().split()))
+print("Yes" if a * a + b * b == c * c else "No")`},
+a049: {exp: "先算判別式 D = b² - 4ac（整數運算，不會有誤差）：D < 0 沒有實數解；D = 0 只有一個解 -b / 2a；D > 0 有兩個解 (-b ± √D) / 2a。注意：a 是負數時，「減號那個解」反而比較大，所以要用 min、max 排好順序再輸出。", py: `import math
+
+a, b, c = map(int, input().split())
+d = b * b - 4 * a * c
+if d < 0:
+    print("No real roots")
+elif d == 0:
+    print(f"{-b / (2 * a):.2f}")
+else:
+    r = math.sqrt(d)
+    x1, x2 = (-b - r) / (2 * a), (-b + r) / (2 * a)
+    print(f"{min(x1, x2):.2f} {max(x1, x2):.2f}")`},
+a050: {exp: "距離公式就是畢氏定理：dx = x1 - x2、dy = y1 - y2，距離 = √(dx² + dy²)。Python 的 math.hypot(dx, dy) 可以直接算出來。", py: `import math
+
+x1, y1, x2, y2 = map(int, input().split())
+print(f"{math.hypot(x1 - x2, y1 - y2):.2f}")`},
+a051: {exp: "面積 = π × r²，周長 = 2 × π × r，π 題目指定用 3.14159。輸出兩個數字、各自固定 2 位小數。", py: `r = int(input())
+PI = 3.14159
+print(f"{PI * r * r:.2f} {2 * PI * r:.2f}")`},
+a052: {exp: "照公式算 C * 9 / 5 + 32，輸出固定 1 位小數：:.1f。Python 的 / 一定是小數除法，所以 9 / 5 不會變成 1。", py: `c = int(input())
+print(f"{c * 9 / 5 + 32:.1f}")`},
+a053: {exp: "第 n 項 = a + (n - 1) × d；前 n 項和 = n × (2a + (n - 1) × d) / 2（首項加末項，乘以項數再除以 2）。這個乘積一定是偶數，所以用整數除法 // 2 剛好整除。Python 的整數不會溢位；用 C++ 時數字會到 10^17 以上，要用 long long。", py: `a, d, n = map(int, input().split())
+print(a + (n - 1) * d, n * (2 * a + (n - 1) * d) // 2)`},
+a054: {exp: "每年的本利和是前一年的 (1 + r / 100) 倍，所以 n 年後是 P × (1 + r / 100)^n。Python 用 ** 做次方。也可以用迴圈一年一年乘上去，結果一樣。", py: `p, r, n = map(int, input().split())
+print(f"{p * (1 + r / 100) ** n:.2f}")`},
+a055: {exp: "用克拉瑪公式：D = a1·b2 - a2·b1，x = (c1·b2 - c2·b1) / D，y = (a1·c2 - a2·c1) / D。分子、分母都先用整數算好，最後才相除，誤差最小。D 不為 0 才有唯一解。", py: `a1, b1, c1 = map(int, input().split())
+a2, b2, c2 = map(int, input().split())
+d = a1 * b2 - a2 * b1
+x = (c1 * b2 - c2 * b1) / d
+y = (a1 * c2 - a2 * c1) / d
+print(f"{x:.2f} {y:.2f}")`}
+
 };
