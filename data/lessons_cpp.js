@@ -259,7 +259,8 @@ export const LESSONS_CPP = [
    "more": [
     "a005",
     "a053",
-    "a054"
+    "a054",
+    "a056"
    ],
    "tip": "先做乘法表和 FizzBuzz 熟悉 for 與判斷。階乘要用 long long；費氏數列用迴圈一步步往後推。"
   }
@@ -366,7 +367,8 @@ export const LESSONS_CPP = [
     "a031",
     "a033",
     "a034",
-    "a035"
+    "a035",
+    "a058"
    ],
    "tip": "先做前三題熟悉讀入與排序。總和、乘積可能很大，記得用 long long。"
   }
@@ -542,7 +544,8 @@ export const LESSONS_CPP = [
    "more": [
     "a024",
     "a017",
-    "a021"
+    "a021",
+    "a060"
    ],
    "tip": "質數、質因數都只需要試到 √n；最小公倍數可以直接用 gcd。"
   }
@@ -628,7 +631,8 @@ export const LESSONS_CPP = [
    ],
    "more": [
     "a037",
-    "a045"
+    "a045",
+    "a057"
    ],
    "tip": "第二大的數可以用 set 去重；不同單字數就是把單字全丟進 set 再看 size。"
   }
@@ -722,7 +726,8 @@ export const LESSONS_CPP = [
     "a042",
     "a043",
     "a044",
-    "a046"
+    "a046",
+    "a059"
    ],
    "tip": "回頭挑一題當初用雙層迴圈寫的題目，試著改成更快的做法，感受時間差異。"
   }

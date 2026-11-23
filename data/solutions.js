@@ -358,5 +358,110 @@ d = a1 * b2 - a2 * b1
 x = (c1 * b2 - c2 * b1) / d
 y = (a1 * c2 - a2 * c1) / d
 print(f"{x:.2f} {y:.2f}")`}
+,
+a056: {exp: "「一天一天加」最多要跑 10^9 次，一定超時。改成先把日期換成「從這一年 1 月 1 日起算的第幾天」，加上 k，再一次跳過很多年：任意連續 3 年恰好有一個貓年，所以每 3 年剛好 3 × 375 + 5 = 1130 天，可以用整數除法一次跳過。跳完之後，剩下的天數不到 3 年，再用迴圈逐年、逐月扣掉就好。每筆測資只需要常數時間。EOF 的輸入，Python 用 for line in sys.stdin 讀到結束；C++ 用 while (cin >> …)。", py: `import sys
+
+def month_len(y, m):
+    if m <= 5:
+        return 40
+    if m <= 9:
+        return 35
+    return 40 if y % 3 == 0 else 35
+
+def year_len(y):
+    return 380 if y % 3 == 0 else 375
+
+for line in sys.stdin:
+    if not line.strip():
+        continue
+    y, m, d, k = map(int, line.split())
+    total = d - 1 + k + sum(month_len(y, i) for i in range(1, m))   # 從 y 年 1 月 1 日起算（第 0 天開始）
+    q = total // 1130                                                # 每 3 年剛好 1130 天
+    y += 3 * q
+    total -= 1130 * q
+    while total >= year_len(y):
+        total -= year_len(y)
+        y += 1
+    m = 1
+    while total >= month_len(y, m):
+        total -= month_len(y, m)
+        m += 1
+    print(y, m, total + 1)`},
+a057: {exp: "用堆疊處理巢狀：遇到 [ 時，先把「目前已經組好的字串 cur」和「這一段要重複的次數 k」一起收進堆疊，然後 cur 重新開始；遇到 ] 時，把堆疊頂端拿出來，新的 cur = 拿出來的字串 + 目前的 cur 重複 k 次。數字可能不只一位，所以遇到數字要用 k = k * 10 + 數字 累積起來。時間跟展開後的長度成正比。", py: `s = input()
+stack = []
+cur, k = "", 0
+for ch in s:
+    if ch.isdigit():
+        k = k * 10 + int(ch)
+    elif ch == "[":
+        stack.append((cur, k))          # 先把目前組好的字串和重複次數收起來
+        cur, k = "", 0
+    elif ch == "]":
+        prev, times = stack.pop()
+        cur = prev + cur * times
+    else:
+        cur += ch
+print(cur)`},
+a058: {exp: "每次魔法如果真的把 l 到 r 一座座加上去，最壞要做 2500 × 10^6 次。改用「差分」：只在 diff[l] 加 v、在 diff[r + 1] 減 v，最後從左到右累加一遍（前綴和），就還原出每座水塔的水量。總時間 O(n + m)。水量最大會到 2500 × 10^6 = 2.5 × 10^9，超過 32 位元整數的範圍，C++ 要用 long long。找最高的水塔時，只在「嚴格大於」目前最大值時才更新編號，就會保留編號最小的那座。", py: `n, m, T = map(int, input().split())
+diff = [0] * (n + 2)
+for _ in range(m):
+    l, r, v = map(int, input().split())
+    diff[l] += v
+    diff[r + 1] -= v
+cur = best = cnt = 0
+pos = 1
+for i in range(1, n + 1):
+    cur += diff[i]                      # 前綴和：還原第 i 座水塔的水量
+    if cur > best:
+        best, pos = cur, i
+    if cur >= T:
+        cnt += 1
+print(best, pos, cnt)`},
+a059: {exp: "K 最大有 10^9，不可能真的做 K 輪。把「每一輪開始時的狀態」（位置 + 方向）記下來：狀態最多只有 R × C × 4 = 1600 種，所以最多模擬 1600 多輪，就一定會遇到之前出現過的狀態，之後就是不斷繞圈。找到重複的那一刻，設第一次出現在第 s 輪、現在是第 rounds 輪，繞一圈的長度 cyc = rounds - s，那麼 K 輪之後的狀態，就等於第 s + (K - s) % cyc 輪開始時的狀態。站過的格子，在模擬到發現重複之前就已經全部走過了，所以直接數集合的大小即可。", py: `R, C, K = map(int, input().split())
+g = [input() for _ in range(R)]
+cmd = input()
+for i in range(R):
+    for j in range(C):
+        if g[i][j] == "S":
+            r, c = i, j
+dr, dc = [-1, 0, 1, 0], [0, 1, 0, -1]       # 北、東、南、西
+d = 0
+seen = {(r, c)}
+first = {}                                    # 某個「一輪開始時的狀態」第一次出現在第幾輪
+states = []
+rounds = 0
+while rounds < K:
+    state = (r, c, d)
+    if state in first:
+        s = first[state]
+        cyc = rounds - s
+        r, c, d = states[s + (K - s) % cyc]
+        break
+    first[state] = rounds
+    states.append(state)
+    for ch in cmd:
+        if ch == "L":
+            d = (d - 1) % 4
+        elif ch == "R":
+            d = (d + 1) % 4
+        else:
+            nr, nc = r + dr[d], c + dc[d]
+            if 0 <= nr < R and 0 <= nc < C and g[nr][nc] != "#":
+                r, c = nr, nc
+                seen.add((r, c))
+    rounds += 1
+print(r + 1, c + 1, "NESW"[d])
+print(len(seen))`},
+a060: {exp: "先排序再算名次。排序的規則有三層：解題數由大到小、罰時由小到大、隊名由小到大，所以用 key=lambda x: (-解題數, 罰時, 隊名)（把解題數加負號，就能讓大的排前面）。名次的算法：只有在「成績和前一名不同」的時候，才把名次更新成目前的位置 i + 1；成績相同就沿用上一個名次，這樣並列之後的下一名會自動跳號。時間 O(n log n)。", py: `n = int(input())
+teams = []
+for _ in range(n):
+    name, s, t = input().split()
+    teams.append((name, int(s), int(t)))
+teams.sort(key=lambda x: (-x[1], x[2], x[0]))
+rank = 0
+for i, (name, s, t) in enumerate(teams):
+    if i == 0 or (s, t) != (teams[i - 1][1], teams[i - 1][2]):
+        rank = i + 1                    # 成績不同才更新名次
+    print(rank, name, s, t)`}
 
 };

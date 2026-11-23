@@ -2,6 +2,7 @@ import {PROBLEMS} from "../data/problems.js";
 import {onUser, login, logout, loadSubs, saveSub, getSite, isAdmin} from "./firebase.js";
 import {judge} from "./judge.js";
 import {judgeCpp} from "./runner.js";
+import {statement, scoring} from "./statement.js";
 import {SOLUTIONS} from "../data/solutions.js";
 import {SOLUTIONS_CPP} from "../data/solutions_cpp.js";
 import {highlight} from "./highlight.js";
@@ -25,8 +26,8 @@ const badges = s => {
 const langText = s => passedLangs(s).length ? `（${passedLangs(s).map(k => LANG_NAME[k]).join("、")}）` : "";
 
 // 題目分類：基礎 / 公式 / APCS 風格（記住上次選的）
-const GROUPS = [["all", "全部"], ["basic", "基礎"], ["formula", "公式"], ["apcs", "APCS"]];
-const GROUP_NAME = {basic: "基礎", formula: "公式題", apcs: "APCS 風格"};
+const GROUPS = [["all", "全部"], ["basic", "基礎"], ["formula", "公式"], ["apcs", "APCS"], ["long", "長題"]];
+const GROUP_NAME = {basic: "基礎", formula: "公式題", apcs: "APCS 風格", long: "競賽風格"};
 let group = "all";
 try { group = localStorage.getItem("mj-group") || "all"; } catch (e) {}
 const filterBar = () => '<div class="seg">' + GROUPS.map(([g, n]) => `<a data-g="${g}" class="${g === group ? "on" : ""}">${n}</a>`).join("") + "</div>";
@@ -62,7 +63,7 @@ function renderList() {
   $("#stat").innerHTML = `已通過 <b>${done}</b> / ${PROBLEMS.length}<div class="bar"><i style="width:${done / PROBLEMS.length * 100}%"></i></div>`;
   $("#list").innerHTML = filterBar() + PROBLEMS.filter(p => group === "all" || p.group === group).map(p => {
     const s = subs[p.id];
-    const m = s ? (s.solved ? '<span class="ac">✔</span>' + badges(s) : '<span class="wa">✘</span>') : "";
+    const m = s ? (s.solved ? '<span class="ac">✔</span>' + badges(s) : (p.subtasks && s.bestScore > 0 ? `<span class="wa">${s.bestScore}分</span>` : '<span class="wa">✘</span>')) : "";
     return `<a data-id="${p.id}" class="${p.id === cur.id ? "on" : ""}${problemClosed(site, p.id) ? " off" : ""}"><span>${p.id} ${esc(p.title)}</span><span><span class="lv lv${p.level}">${LV[p.level]}</span> ${problemClosed(site, p.id) ? "🔒" : m}</span></a>`;
   }).join("");
   document.querySelectorAll("#list a[data-id]").forEach(a => a.onclick = () => show(a.dataset.id));
@@ -84,12 +85,8 @@ function show(id) {
   const warn = shut ? '<div class="banner">這一題對一般使用者關閉中（你是管理員，仍可使用）</div>' : "";
   $("#view").innerHTML = `${note}${warn}
     <div class="ttl"><h2>${cur.id}：${esc(cur.title)} <span class="lv lv${cur.level}">${LV[cur.level]}</span>${cur.group !== "basic" ? ` <span class="grp">${GROUP_NAME[cur.group]}</span>` : ""}</h2><button class="ans" id="ans">💡 參考答案</button></div>
-    <small>時間限制 ${cur.limit / 1000} 秒　｜　共 ${cur.tests.length} 筆測資${s ? `　｜　你的紀錄：${s.solved ? "已通過" + langText(s) : "尚未通過"}，嘗試 ${s.tries || 1} 次` : ""}</small>
-    <p>${esc(cur.desc)}</p>
-    <b>輸入說明</b><div class="box">${esc(cur.inFmt)}</div>
-    <b>輸出說明</b><div class="box">${esc(cur.outFmt)}</div>
-    <b>範例輸入</b><pre>${esc(cur.sample[0])}</pre>
-    <b>範例輸出</b><pre>${esc(cur.sample[1])}</pre>
+    <small>時間限制 ${cur.limit / 1000} 秒　｜　共 ${cur.inputs.length} 筆測資${cur.subtasks ? "　｜　滿分 " + cur.subtasks.reduce((n, t) => n + t.score, 0) + " 分" : ""}${s ? `　｜　你的紀錄：${s.solved ? "已通過" + langText(s) : "尚未通過"}，嘗試 ${s.tries || 1} 次` : ""}</small>
+    ${statement(cur)}
     <div class="row"><select id="lang"><option value="py">Python 3</option>${site.runnerUrl ? '<option value="cpp">C++ (g++)</option>' : ""}</select>
       <button class="p" id="go">提交</button><small id="hint"></small></div>
     <div class="acbar" id="acbar" hidden></div>
@@ -146,15 +143,19 @@ async function submit() {
   btn.disabled = true; res.innerHTML = "";
   $("#hint").textContent = lang === "py" ? "首次執行 Python 需載入環境，請稍候…" : lang === "cpp" ? "C++ 會送到評測服務編譯並執行，大約需要幾秒…" : "";
   const run = lang === "cpp" ? (c, t, l, f) => judgeCpp(site.runnerUrl, c, t, l, f) : (c, t, l, f) => judge(lang, c, t, l, f);
+  const verd = [];
   const r = await run(code, cur.tests, cur.limit, (i, v, err, info) => {
+    verd[i] = v;
     const d = document.createElement("div");
     d.innerHTML = `測資 ${i + 1}：<span class="v-${v}">${v}</span>` +
       (err && v !== "CE" ? ` <small>${esc(err.split("\n").slice(-2).join(" "))}</small>` : "") + detail(v, info);
     res.appendChild(d);
   });
   $("#hint").textContent = ""; btn.disabled = false;
+  const sc = scoring(cur, verd);                 // 有子任務的題目才會有分數
+  if (sc) r.score = sc.score;
   res.insertAdjacentHTML("afterbegin",
-    `<h3 class="${r.solved ? "ac" : "wa"}">${r.solved ? "🎉 Accepted" : r.first}（${r.passed}/${r.total}）</h3>`);
+    `<h3 class="${r.solved ? "ac" : "wa"}">${r.solved ? "🎉 Accepted" : r.first}（${r.passed}/${r.total}）${sc ? ` ｜ 得分 ${sc.score} / ${sc.total}` : ""}</h3>${sc ? sc.html : ""}`);
   if (!user) { res.insertAdjacentHTML("beforeend", "<small>登入後才能儲存紀錄。</small>"); return; }
   const prev = subs[cur.id] || {};
   const rec = buildRecord(prev, lang, code, r);

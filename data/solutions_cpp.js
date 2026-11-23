@@ -569,5 +569,116 @@ a055: S(`int main() {
     double d = a1 * b2 - a2 * b1;
     cout << fixed << setprecision(2) << (c1 * b2 - c2 * b1) / d << " " << (a1 * c2 - a2 * c1) / d << endl;
 }`)
+,
+a056: S(`int main() {
+    long long y, m, d, k;
+    auto mlen = [](long long y, int m) { return m <= 5 ? 40 : m <= 9 ? 35 : (y % 3 == 0 ? 40 : 35); };
+    auto ylen = [](long long y) { return y % 3 == 0 ? 380 : 375; };
+    while (cin >> y >> m >> d >> k) {          // 讀到 EOF 為止
+        long long t = d - 1 + k;
+        for (int i = 1; i < m; i++) t += mlen(y, i);
+        long long q = t / 1130;                // 每 3 年剛好 1130 天
+        y += 3 * q;
+        t -= 1130 * q;
+        while (t >= ylen(y)) { t -= ylen(y); y++; }
+        m = 1;
+        while (t >= mlen(y, m)) { t -= mlen(y, m); m++; }
+        cout << y << " " << m << " " << t + 1 << "\\n";
+    }
+}`, "while (cin >> y >> m >> d >> k) 在讀不到資料（EOF）時會結束；k 最大 10^9 再加上天數，用 long long 比較保險。"),
+a057: S(`int main() {
+    string s, cur;
+    cin >> s;
+    vector<pair<string, int>> st;
+    int k = 0;
+    for (char ch : s) {
+        if (isdigit(ch)) k = k * 10 + (ch - '0');
+        else if (ch == '[') { st.push_back({cur, k}); cur = ""; k = 0; }
+        else if (ch == ']') {
+            auto [prev, times] = st.back();
+            st.pop_back();
+            string rep;
+            for (int i = 0; i < times; i++) rep += cur;
+            cur = prev + rep;
+        } else cur += ch;
+    }
+    cout << cur << endl;
+}`),
+a058: S(`int main() {
+    int n, m;
+    long long T;
+    cin >> n >> m >> T;
+    vector<long long> diff(n + 2, 0);
+    for (int i = 0; i < m; i++) {
+        int l, r, v;
+        cin >> l >> r >> v;
+        diff[l] += v;
+        diff[r + 1] -= v;
+    }
+    long long cur = 0, best = 0;
+    int pos = 1, cnt = 0;
+    for (int i = 1; i <= n; i++) {
+        cur += diff[i];
+        if (cur > best) { best = cur; pos = i; }
+        if (cur >= T) cnt++;
+    }
+    cout << best << " " << pos << " " << cnt << endl;
+}`, "水量最大會到 2.5 × 10^9，超過 int（約 2.1 × 10^9），所以 diff、cur、best 都要用 long long。"),
+a059: S(`int main() {
+    int R, C;
+    long long K;
+    cin >> R >> C >> K;
+    vector<string> g(R);
+    for (auto &row : g) cin >> row;
+    string cmd;
+    cin >> cmd;
+    int r = 0, c = 0, d = 0;
+    for (int i = 0; i < R; i++)
+        for (int j = 0; j < C; j++)
+            if (g[i][j] == 'S') { r = i; c = j; }
+    int dr[4] = {-1, 0, 1, 0}, dc[4] = {0, 1, 0, -1};     // 北、東、南、西
+    set<pair<int, int>> seen = {{r, c}};
+    map<array<int, 3>, long long> first;
+    vector<array<int, 3>> states;
+    long long rounds = 0;
+    while (rounds < K) {
+        array<int, 3> st = {r, c, d};
+        if (first.count(st)) {
+            long long s = first[st], cyc = rounds - s;
+            st = states[s + (K - s) % cyc];
+            r = st[0]; c = st[1]; d = st[2];
+            break;
+        }
+        first[st] = rounds;
+        states.push_back(st);
+        for (char ch : cmd) {
+            if (ch == 'L') d = (d + 3) % 4;
+            else if (ch == 'R') d = (d + 1) % 4;
+            else {
+                int nr = r + dr[d], nc = c + dc[d];
+                if (nr >= 0 && nr < R && nc >= 0 && nc < C && g[nr][nc] != '#') { r = nr; c = nc; seen.insert({r, c}); }
+            }
+        }
+        rounds++;
+    }
+    cout << r + 1 << " " << c + 1 << " " << "NESW"[d] << "\\n" << seen.size() << endl;
+}`, "用 array<int, 3> 當 map 的鍵很方便；左轉要寫成 (d + 3) % 4，因為 C++ 的 % 對負數會得到負的餘數（-1 % 4 是 -1）。"),
+a060: S(`int main() {
+    int n;
+    cin >> n;
+    vector<tuple<string, int, int>> t(n);
+    for (auto &[name, s, p] : t) cin >> name >> s >> p;
+    sort(t.begin(), t.end(), [](auto &a, auto &b) {
+        if (get<1>(a) != get<1>(b)) return get<1>(a) > get<1>(b);   // 解題數多的在前
+        if (get<2>(a) != get<2>(b)) return get<2>(a) < get<2>(b);   // 罰時少的在前
+        return get<0>(a) < get<0>(b);                                // 最後比隊名
+    });
+    int rank = 0;
+    for (int i = 0; i < n; i++) {
+        auto &[name, s, p] = t[i];
+        if (i == 0 || s != get<1>(t[i - 1]) || p != get<2>(t[i - 1])) rank = i + 1;
+        cout << rank << " " << name << " " << s << " " << p << "\\n";
+    }
+}`, "sort 的第三個參數是 lambda 比較函式：回傳 true 代表 a 應該排在 b 前面。")
 
 };

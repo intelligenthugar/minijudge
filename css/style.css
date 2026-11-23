@@ -218,3 +218,12 @@ nav .seg a.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 /* 題目分類標籤與篩選 */
 .grp{font-size:12px;padding:1px 9px;border-radius:99px;border:1px solid var(--ac);color:var(--ac);vertical-align:middle;white-space:nowrap}
 nav .seg a{font-size:13px;padding:5px 2px}
+/* 長題的敘述、子任務表 */
+.stmt h3{color:var(--h);margin:20px 0 6px}
+.stmt ul,.stmt ol{margin:6px 0 6px 20px}
+.stmt li{margin:2px 0}
+.stbl{border-collapse:collapse;margin:8px 0}
+.stbl th,.stbl td{border:1px solid var(--bd);padding:4px 12px;text-align:left}
+.stbl th{background:var(--code);color:var(--h)}
+.subres{margin:4px 0 10px;padding:6px 12px;border-radius:8px;background:var(--code)}
+nav .seg{flex-wrap:wrap}

@@ -346,7 +346,171 @@ const RAW = [
  desc: "解聯立方程式：a1·x + b1·y = c1 與 a2·x + b2·y = c2。輸入六個係數，保證有唯一解（也就是 a1·b2 - a2·b1 不為 0），而且 x、y 都不是 0。輸出 x 與 y，四捨五入到小數點後第 2 位，以空白分隔。",
  inFmt: "兩行：第一行 a1 b1 c1，第二行 a2 b2 c2（|係數| ≤ 100）", outFmt: "一行兩個小數：x y",
  ref: s => { const [r1, r2] = s.split("\n"), [a1, b1, c1] = r1.split(" ").map(Number), [a2, b2, c2] = r2.split(" ").map(Number), D = a1 * b2 - a2 * b1; return `${((c1 * b2 - c2 * b1) / D).toFixed(2)} ${((a1 * c2 - a2 * c1) / D).toFixed(2)}`; },
- inputs: ["1 1 3\n1 -1 1", "2 3 8\n1 -1 -1", "3 -2 7\n1 4 -1", "1 2 5\n3 4 6", linIn(), linIn(), linIn(), linIn()]}
+ inputs: ["1 1 3\n1 -1 1", "2 3 8\n1 -1 -1", "3 -2 7\n1 4 -1", "1 2 5\n3 4 6", linIn(), linIn(), linIn(), linIn()]},
+
+// ======== 競賽風格長題（長敘述、多筆測資、子任務計分；原創題目） ========
+{id: "a056", title: "喵星的日曆", limit: 3000,
+ story: `在銀河系的邊緣有一顆叫做「喵星」的行星，星球上住著一位超級愛睡覺的**喵皇**。喵皇每天只做三件事：睡覺、吃罐罐、看日曆。
+
+但是，喵星的曆法跟地球完全不同：
+
+- 一年有 10 個月，編號 1～10。
+- 第 1～5 月，每個月有 40 天；第 6～10 月，每個月有 35 天。
+- 如果年份是 3 的倍數，這一年叫做「**貓年**」，貓年的第 10 個月會多出 5 天（變成 40 天）。其他年份的第 10 個月是 35 天。
+
+日期用「年 月 日」表示，月和日都從 1 開始。
+
+今天喵皇又睡過頭了，醒來之後完全搞不清楚已經過了幾天。管家貓遞上一份清單，上面有一連串的「起始日期」和「經過的天數」。喵皇想知道：**從這個日期開始，再過 k 天，是喵星曆的哪一天？**（k = 0 表示就是當天。）
+
+身為喵星最厲害的程式設計師，請你寫一支程式幫助喵皇，否則……喵皇會**用貓爪把你的鍵盤抓壞**！`,
+ inFmt: `輸入有多筆測資，讀到 EOF（檔案結束）為止。每筆測資一行，有四個以空白隔開的整數 y、m、d、k，代表起始日期是 y 年 m 月 d 日，要往後推 k 天。
+
+- 1 ≤ y ≤ 10^6
+- 輸入的日期保證是合法的日期
+- 0 ≤ k ≤ 10^9
+- 每個測資檔最多 2000 行`,
+ outFmt: `對每一筆測資輸出一行，包含三個以空白隔開的整數，代表 k 天後的「年 月 日」。`,
+ hint: `k 最大有 10^9，一天一天往後加一定會超時。想想看：任意連續 3 年當中，剛好有一個貓年，所以每 3 年的總天數是固定的。`,
+ subtasks: [{score: 20, text: "k ≤ 100", tests: [0, 1, 2]}, {score: 30, text: "k ≤ 10^5，輸入最多 100 行", tests: [3, 4, 5]}, {score: 50, text: "無額外限制", tests: [6, 7, 8]}],
+ samples: ["1 1 1 0\n1 1 1 40\n1 5 40 1\n1 10 35 1\n3 10 40 1\n2 10 35 100"],
+ ref: s => s.split("\n").filter(l => l.trim()).map(line => {
+   let [y, m, d, k] = line.split(" ").map(Number), t = d - 1 + k;
+   for (let i = 1; i < m; i++) t += mlen(y, i);
+   const q = Math.floor(t / 1130); y += 3 * q; t -= 1130 * q;
+   while (t >= (y % 3 === 0 ? 380 : 375)) { t -= (y % 3 === 0 ? 380 : 375); y++; }
+   m = 1; while (t >= mlen(y, m)) { t -= mlen(y, m); m++; }
+   return `${y} ${m} ${t + 1}`;
+ }).join("\n"),
+ inputs: ["1 1 1 0\n1 1 1 40\n1 5 40 1\n1 10 35 1\n3 10 40 1\n2 10 35 100", () => dateLines(5601, 60, 100, 20, "edge"), () => dateLines(5602, 100, 100, 20),
+   () => dateLines(5603, 80, 1e5, 50), () => dateLines(5604, 100, 1e5, 50, "edge"), () => dateLines(5605, 100, 1e5, 1e6),
+   () => dateLines(5606, 1500, 1e9, 1e6), () => dateLines(5607, 1000, 1e9, 1e6, "cyc"), () => dateLines(5608, 1500, 1e9, 1e6, "edge")]},
+
+{id: "a057", title: "魔法學院的壓縮咒語", limit: 2000,
+ story: `魔法學院的圖書館裡，有一本年代久遠的《重複咒語大全》。為了節省羊皮紙，古代的魔法師發明了一種壓縮寫法：
+
+- \`k[咒語]\` 代表把中括號裡的咒語**連續唱 k 遍**。例如 \`3[ab]\` 就是 \`ababab\`。
+- 括號裡面還可以有括號。例如 \`2[a3[bc]]d\` 要先展開裡面的 \`3[bc]\` 變成 \`abcbcbc\`，再唱 2 遍，最後接上 \`d\`，得到 \`abcbcbcabcbcbcd\`。
+- 沒有被括號包住的字母，就只唱一遍。
+
+見習魔法師小咪拿到了一大堆壓縮過的咒語，卻**完全不知道怎麼唱**（唱錯的話，會召喚出一隻會噴火的茄子）。請你寫一支程式，幫小咪把壓縮咒語完整地展開。`,
+ inFmt: `一行字串，代表壓縮後的咒語，只包含小寫英文字母、數字與 \`[\`、\`]\`。保證格式合法：每個 \`[\` 前面一定有一個正整數 k，括號都有正確配對，而且括號裡面至少有一個字元。
+
+- 壓縮咒語的長度 ≤ 2000
+- 展開後的長度 ≤ 20000
+- 1 ≤ k ≤ 99`,
+ outFmt: `輸出展開後的咒語（一行）。`,
+ hint: `遇到 \`[\` 時，先把「目前已經組好的字串」和「重複次數 k」一起收進堆疊；遇到 \`]\` 時再拿出來，把括號裡的內容重複 k 次，接在拿出來的字串後面。`,
+ subtasks: [{score: 20, text: "沒有巢狀括號（括號裡面不會再有括號），且 k 都是 1 位數", tests: [0, 1, 2]}, {score: 30, text: "k 都是 1 位數", tests: [3, 4, 5]}, {score: 50, text: "無額外限制", tests: [6, 7, 8]}],
+ samples: ["3[ab]c", "2[a3[bc]]d"],
+ ref: s => { const st = []; let cur = "", k = 0; for (const ch of s) { if (ch >= "0" && ch <= "9") k = k * 10 + +ch; else if (ch === "[") { st.push([cur, k]); cur = ""; k = 0; } else if (ch === "]") { const [p, kk] = st.pop(); cur = p + cur.repeat(kk); } else cur += ch; } return cur; },
+ inputs: ["3[ab]c", () => spellGen(5701, {depth: 1, two: false, target: 80}), () => spellGen(5702, {depth: 1, two: false, target: 1500}),
+   "2[a3[bc]]d", () => spellGen(5703, {depth: 3, two: false, target: 300}), () => spellGen(5704, {depth: 3, two: false, target: 1800}),
+   "12[3[4[5[ab]]]]", () => spellGen(5705, {depth: 3, two: true, target: 600}), () => spellGen(5706, {depth: 4, two: true, target: 1900})]},
+
+{id: "a058", title: "魔法水塔", limit: 4000,
+ story: `沙漠中有一座神祕的綠洲城市，城裡有 n 座魔法水塔，排成一直線，編號 1～n，**一開始全部都是空的**。
+
+每天晚上，水之精靈會施展一次魔法：選擇一段連續的水塔（編號 l 到 r），**讓這一段裡的每一座水塔，水量都增加 v 單位**。水之精靈一共施展了 m 次魔法。
+
+城主想要知道：
+
+1. 所有水塔中，**最高的水量**是多少？
+2. 水量最高的水塔裡，**編號最小**的是第幾座？
+3. 有多少座水塔的水量**至少有 T 單位**？（T 是城主規定的「及格水位」）
+
+城主一邊喝著**珍珠奶茶**，一邊等你的答案。不要讓他等太久，否則……他會把你的程式丟進沙漠裡曬成乾。`,
+ inFmt: `第一行有三個整數 n、m、T。接下來 m 行，每行三個整數 l、r、v，代表一次魔法。
+
+- 1 ≤ n ≤ 10^6
+- 1 ≤ m ≤ 2500
+- 1 ≤ T ≤ 10^10
+- 1 ≤ l ≤ r ≤ n
+- 1 ≤ v ≤ 10^6`,
+ outFmt: `輸出一行，包含三個以空白隔開的整數：最高的水量、水量最高且編號最小的水塔編號、水量至少為 T 的水塔數量。`,
+ hint: `最後的水量可能超過 2^31（約 21 億），C++ 要用 \`long long\`。如果每次魔法都把 l 到 r 一座一座加上去，最壞要做 2500 × 10^6 次，一定超時。試試看「差分」。`,
+ subtasks: [{score: 20, text: "n ≤ 1000，m ≤ 1000", tests: [0, 1, 2]}, {score: 30, text: "n ≤ 10^5", tests: [3, 4, 5]}, {score: 50, text: "無額外限制", tests: [6, 7, 8]}],
+ samples: ["5 3 4\n1 3 2\n2 5 3\n3 3 1"],
+ ref: s => { const L = s.split("\n"), [n, m, T] = L[0].split(" ").map(Number), d = new Float64Array(n + 2); for (let i = 1; i <= m; i++) { const [l, r, v] = L[i].split(" ").map(Number); d[l] += v; d[r + 1] -= v; } let cur = 0, best = 0, pos = 1, cnt = 0; for (let i = 1; i <= n; i++) { cur += d[i]; if (cur > best) { best = cur; pos = i; } if (cur >= T) cnt++; } return `${best} ${pos} ${cnt}`; },
+ inputs: ["5 3 4\n1 3 2\n2 5 3\n3 3 1", () => towerCase(5801, 1000, 1000, 1e6), "1 1 1\n1 1 5",
+   () => towerCase(5803, 1e5, 2500, 1e6), () => towerCase(5804, 1e5, 2500, 1e6, "narrow"), () => towerCase(5805, 1e5, 3, 1e6),
+   () => towerCase(5806, 1e6, 2500, 1e6), () => towerCase(5807, 1e6, 2500, 1e6, "full"), () => towerCase(5808, 1e6, 2500, 1e6, "narrow")]},
+
+{id: "a059", title: "掃地機器人", limit: 3000,
+ story: `吉祥物機器人「小圓」是學校掃地機器人團隊的新成員。今天，它的任務是在一間 R × C 的教室裡掃地。教室的地圖是一個網格，每一格是：
+
+- \`.\`：空地。
+- \`#\`：牆壁或桌椅，不能進入。
+- \`S\`：小圓一開始站的位置（也是空地）。
+
+小圓一開始**面向北方**（地圖的上方）。它有一串固定的指令，指令只包含三種字元：
+
+- \`F\`：往面向的方向前進一格。如果前面是牆壁，或是已經在教室外面，就**停在原地**（撞到了）。
+- \`L\`：原地向左轉 90 度。
+- \`R\`：原地向右轉 90 度。
+
+小圓會把整串指令從頭到尾執行一遍，稱為「一輪」，接著**再重複同一串指令**，一共執行 K 輪。
+
+老師想知道：K 輪結束後，小圓站在哪裡、面向哪個方向？以及這段期間（包含一開始站的位置），小圓**總共站過幾個不同的格子**？因為老師還要趕著去**買午餐的雞排**，請你快點寫出來！`,
+ inFmt: `第一行有三個整數 R、C、K。接下來 R 行是教室地圖，每行有 C 個字元。最後一行是一串指令。
+
+- 1 ≤ R, C ≤ 20
+- 地圖中恰好有一個 \`S\`
+- 指令的長度 L 滿足 1 ≤ L ≤ 100，只包含 \`F\`、\`L\`、\`R\`
+- 1 ≤ K ≤ 10^9`,
+ outFmt: `第一行輸出 K 輪結束後小圓的位置與面向的方向，格式是「列 行 方向」，以空白隔開。列、行都從 1 開始編號（最上面是第 1 列、最左邊是第 1 行）；方向用 \`N\`（北）、\`E\`（東）、\`S\`（南）、\`W\`（西）表示。
+
+第二行輸出小圓總共站過幾個不同的格子（包含一開始的位置）。`,
+ hint: `K 最大有 10^9，不可能真的做 K 輪。把「每一輪開始時的狀態」（位置與方向）記下來：狀態最多只有 R × C × 4 種，所以很快就會出現重複，之後就是不斷繞圈。`,
+ subtasks: [{score: 20, text: "K ≤ 100", tests: [0, 1, 2]}, {score: 30, text: "K ≤ 10^6", tests: [3, 4, 5]}, {score: 50, text: "無額外限制", tests: [6, 7, 8]}],
+ samples: ["5 6 3\n......\n.##...\n......\n..#...\nS.....\nFFRFFLF"],
+ ref: s => {
+   const L = s.split("\n"), [R, C, K] = L[0].split(" ").map(Number), g = L.slice(1, 1 + R), cmd = L[1 + R];
+   let r = 0, c = 0, d = 0;
+   for (let i = 0; i < R; i++) for (let j = 0; j < C; j++) if (g[i][j] === "S") { r = i; c = j; }
+   const dr = [-1, 0, 1, 0], dc = [0, 1, 0, -1], seen = new Set([r * C + c]), first = new Map(), states = [];
+   let rounds = 0;
+   while (rounds < K) {
+     const key = (r * C + c) * 4 + d;
+     if (first.has(key)) { const st = first.get(key), cyc = rounds - st; [r, c, d] = states[st + (K - st) % cyc]; break; }
+     first.set(key, rounds); states.push([r, c, d]);
+     for (const ch of cmd) {
+       if (ch === "L") d = (d + 3) % 4; else if (ch === "R") d = (d + 1) % 4;
+       else { const nr = r + dr[d], nc = c + dc[d]; if (nr >= 0 && nr < R && nc >= 0 && nc < C && g[nr][nc] !== "#") { r = nr; c = nc; seen.add(r * C + c); } }
+     }
+     rounds++;
+   }
+   return `${r + 1} ${c + 1} ${"NESW"[d]}\n${seen.size}`;
+ },
+ inputs: ["5 6 3\n......\n.##...\n......\n..#...\nS.....\nFFRFFLF", () => robotCase(5901, 8, 8, 50, 0.2, 20, 0.6), () => robotCase(5902, 1, 1, 100, 0, 5, 0.5),
+   () => robotCase(5903, 15, 15, 1e6, 0.15, 40, 0.7), () => robotCase(5904, 20, 20, 1e6, 0.3, 100, 0.5), () => robotCase(5905, 10, 12, 999999, 0, 7, 0.8),
+   () => robotCase(5906, 20, 20, 1e9, 0.2, 100, 0.6), () => robotCase(5907, 20, 20, 1e9, 0, 99, 0.9), () => robotCase(5908, 13, 17, 999999999, 0.25, 77, 0.65)]},
+
+{id: "a060", title: "校園程式競賽排名", limit: 3000,
+ story: `一年一度的**校園程式競賽**到了！主辦單位有 n 支參賽隊伍，每支隊伍都有一個隊名（不會重複）、解出的題數，以及總罰時（單位是分鐘）。
+
+排名的規則如下：
+
+1. 解題數**越多**，排名越前面。
+2. 解題數一樣的話，總罰時**越少**，排名越前面。
+3. 解題數和總罰時都一樣的隊伍，名次**並列**。輸出時，隊名**字典順序較小**的先輸出。
+
+並列的隊伍名次相同，而下一支成績不同的隊伍，名次要把前面所有的隊伍數量都算進去。例如有兩隊並列第 2 名，那下一隊就是第 4 名（沒有第 3 名）。
+
+頒獎典禮的主持人是**一隻戴著領結的企鵝**，牠不會算名次，只會吃魚。請你寫一支程式，幫牠排出完整的排行榜！`,
+ inFmt: `第一行有一個整數 n。接下來 n 行，每行有三項以空白隔開的資料：隊名（只包含小寫英文字母，長度 1～10，所有隊名都不相同）、解題數 s、總罰時 t。
+
+- 1 ≤ n ≤ 2000
+- 0 ≤ s ≤ 20
+- 0 ≤ t ≤ 10^5`,
+ outFmt: `輸出 n 行，依排名順序，每行輸出「名次 隊名 解題數 總罰時」，以空白隔開。`,
+ hint: `Python 可以用 \`sort(key=lambda …)\`，C++ 可以用 \`sort\` 搭配 lambda（或是用 pair、tuple）。把「解題數取負號」就能讓解題數大的排在前面。名次只有在「成績和前一名不同」的時候，才更新成目前的位置（i + 1）。`,
+ subtasks: [{score: 20, text: "n ≤ 10，沒有任何兩隊的解題數和總罰時完全相同", tests: [0, 1, 2]}, {score: 30, text: "n ≤ 100", tests: [3, 4, 5]}, {score: 50, text: "無額外限制", tests: [6, 7, 8]}],
+ samples: ["5\ncat 3 120\ndog 3 100\nowl 5 300\nbee 3 100\nfox 0 0"],
+ ref: s => { const L = s.split("\n"), n = +L[0], t = []; for (let i = 1; i <= n; i++) { const [nm, a, b] = L[i].split(" "); t.push([nm, +a, +b]); } t.sort((x, y) => y[1] - x[1] || x[2] - y[2] || (x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : 0)); let rank = 0; return t.map((x, i) => { if (i === 0 || x[1] !== t[i - 1][1] || x[2] !== t[i - 1][2]) rank = i + 1; return `${rank} ${x[0]} ${x[1]} ${x[2]}`; }).join("\n"); },
+ inputs: ["5\ncat 3 120\ndog 3 100\nowl 5 300\nbee 2 100\nfox 0 0", () => teamCase(6001, 10, 20, 1e5, true), () => teamCase(6002, 1, 20, 1e5, true),
+   () => teamCase(6003, 100, 5, 50), () => teamCase(6004, 100, 20, 1e5), () => teamCase(6005, 100, 0, 0),
+   () => teamCase(6006, 2000, 20, 1e5), () => teamCase(6007, 2000, 3, 5), () => teamCase(6008, 2000, 0, 0)]}
+
 
 
 ];
@@ -415,17 +579,108 @@ function linIn() {
   }
 }
 
+// ---- 競賽風格長題用的測資產生器：每筆測資用自己的亂數種子，第一次用到時才產生（不依賴載入順序、也不會拖慢其他頁面）----
+const ri2 = (R2, a, b) => a + Math.floor(R2() * (b - a + 1));
+const mlen = (y, m) => m <= 5 ? 40 : m <= 9 ? 35 : (y % 3 === 0 ? 40 : 35);
+
+function dateLines(seed, cnt, maxK, maxY, mode) {
+  const R2 = rng(seed), out = [];
+  for (let i = 0; i < cnt; i++) {
+    const y = ri2(R2, 1, maxY);
+    let m = ri2(R2, 1, 10), d, k;
+    if (mode === "edge") { m = [1, 5, 6, 9, 10][ri2(R2, 0, 4)]; d = R2() < 0.5 ? 1 : mlen(y, m); }
+    else d = ri2(R2, 1, mlen(y, m));
+    if (mode === "edge") k = [0, 1, 39, 40, 41, 374, 375, 376, 379, 380, 381, 1129, 1130, 1131, 2260, maxK][ri2(R2, 0, 15)];
+    else if (mode === "cyc") k = 1130 * ri2(R2, 0, 880000) + ri2(R2, -2, 2);
+    else k = ri2(R2, 0, maxK);
+    out.push(`${y} ${m} ${d} ${Math.max(0, Math.min(k, maxK))}`);
+  }
+  return out.join("\n");
+}
+const expLen = s => {
+  const st = []; let cur = 0, k = 0;
+  for (const ch of s) {
+    if (ch >= "0" && ch <= "9") k = k * 10 + +ch;
+    else if (ch === "[") { st.push([cur, k]); cur = 0; k = 0; }
+    else if (ch === "]") { const [p, kk] = st.pop(); cur = p + cur * kk; }
+    else cur++;
+  }
+  return cur;
+};
+function spellGen(seed, o) {                     // o: {depth, two, target}
+  const R2 = rng(seed);
+  const letters = n => Array.from({length: n}, () => "abcdefghij"[ri2(R2, 0, 9)]).join("");
+  const kk = () => o.two && R2() < 0.4 ? ri2(R2, 10, 99) : ri2(R2, 1, 9);
+  const piece = depth => {
+    let s = "";
+    for (let i = ri2(R2, 1, 3); i > 0; i--) s += R2() < 0.4 || depth === 0 ? letters(ri2(R2, 1, 3)) : kk() + "[" + piece(depth - 1) + "]";
+    return s;
+  };
+  let best = "";
+  for (let t = 0; t < 12; t++) {
+    let s = "";
+    for (let g = 0; g < 120 && s.length < o.target; g++) {
+      const p = piece(o.depth);
+      if (s.length + p.length > 2000 || expLen(s + p) > 20000) continue;
+      s += p;
+    }
+    if (s.length > best.length) best = s;
+  }
+  return best;
+}
+function towerCase(seed, n, m, maxV, wide) {
+  const R2 = rng(seed), ops = [], diff = new Float64Array(n + 2);
+  for (let i = 0; i < m; i++) {
+    let l, r, v = ri2(R2, 1, maxV);
+    if (wide === "full") { l = 1; r = n; v = maxV; }
+    else if (wide === "narrow") { l = ri2(R2, 1, n); r = Math.min(n, l + ri2(R2, 0, 20)); }
+    else { l = ri2(R2, 1, n); r = ri2(R2, l, n); }
+    ops.push(`${l} ${r} ${v}`); diff[l] += v; diff[r + 1] -= v;
+  }
+  let cur = 0, T = 1;
+  const pick = ri2(R2, 1, n);
+  for (let i = 1; i <= n; i++) { cur += diff[i]; if (i === pick) T = Math.max(1, cur); }
+  return `${n} ${m} ${T}\n${ops.join("\n")}`;
+}
+function robotCase(seed, R, C, K, wallP, L, fProb) {
+  const R2 = rng(seed), g = Array.from({length: R}, () => Array.from({length: C}, () => R2() < wallP ? "#" : "."));
+  g[ri2(R2, 0, R - 1)][ri2(R2, 0, C - 1)] = "S";
+  const cmd = Array.from({length: L}, () => { const x = R2(); return x < fProb ? "F" : x < fProb + (1 - fProb) / 2 ? "L" : "R"; }).join("");
+  return `${R} ${C} ${K}\n${g.map(r => r.join("")).join("\n")}\n${cmd}`;
+}
+function teamCase(seed, n, maxS, maxT, noTie) {
+  const R2 = rng(seed), names = new Set(), seen = new Set(), rows = [];
+  while (rows.length < n) {
+    let nm = "";
+    for (let i = ri2(R2, 1, 8); i > 0; i--) nm += "abcdefghijklmnopqrstuvwxyz"[ri2(R2, 0, 25)];
+    if (names.has(nm)) continue;
+    const s = ri2(R2, 0, maxS), t = ri2(R2, 0, maxT);
+    if (noTie && seen.has(s + "," + t)) continue;
+    names.add(nm); seen.add(s + "," + t); rows.push(`${nm} ${s} ${t}`);
+  }
+  return `${n}\n${rows.join("\n")}`;
+}
+
 // 難度：1 簡單（預設）、2 中等、3 困難
 const LV = {a004: 2, a006: 2, a008: 2, a013: 2, a015: 2, a016: 2, a018: 2, a020: 2, a017: 3, a019: 3,
   a021: 2, a022: 2, a023: 2, a025: 2, a027: 3, a028: 2, a029: 2,
   a033: 2, a034: 2, a035: 2, a036: 3, a037: 3, a038: 2, a039: 2, a040: 3, a041: 3, a042: 3, a043: 3, a044: 3, a045: 3, a046: 3,
-  a048: 1, a049: 2, a050: 1, a051: 1, a053: 2, a054: 2, a055: 2};
+  a048: 1, a049: 2, a050: 1, a051: 1, a053: 2, a054: 2, a055: 2,
+  a056: 3, a057: 3, a058: 3, a059: 3, a060: 2};
 
 // 題目頁顯示的「範例」。預設用第一筆測資；如果第一筆是 0、1 這種邊界值（範例會很沒意義），就在這裡另外指定。
 const SAMPLE = {a004: "17", a005: "10", a009: "5", a012: "3", a013: "12345", a015: "10", a017: "12", a019: "([]{})", a021: "10", a029: "5", a030: "5", a032: "(()(()))", a035: "4", a038: "3", a039: "3", a040: "6", a051: "5", a052: "37"};
 
+const resolve = i => typeof i === "function" ? i() : i;
+const groupOf = id => { const n = parseInt(id.slice(1), 10); return n > 55 ? "long" : n > 46 ? "formula" : n > 30 ? "apcs" : "basic"; };
+
 export const PROBLEMS = RAW.map(p => {
-  const tests = p.inputs.map(i => [i, p.ref(i)]);
-  const si = SAMPLE[p.id] || p.inputs[0];
-  return {...p, tests, sample: [si, p.ref(si)], level: LV[p.id] || 1, group: parseInt(p.id.slice(1), 10) > 46 ? "formula" : parseInt(p.id.slice(1), 10) > 30 ? "apcs" : "basic"};
+  const o = {...p, level: LV[p.id] || 1, group: groupOf(p.id)};
+  // 範例：可以有多組（samples），預設用第一筆測資（或 SAMPLE 指定的）
+  o.samples = (p.samples || [SAMPLE[p.id] || resolve(p.inputs[0])]).map(si => [si, p.ref(si)]);
+  o.sample = o.samples[0];
+  // 測資第一次用到才產生（長題的測資比較大，不要拖慢其他頁面）
+  let cache = null;
+  Object.defineProperty(o, "tests", {enumerable: true, get() { return cache || (cache = p.inputs.map(i => { const s = resolve(i); return [s, p.ref(s)]; })); }});
+  return o;
 });

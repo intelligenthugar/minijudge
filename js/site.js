@@ -59,6 +59,8 @@ export function buildRecord(prev, lang, code, r) {
     solved: !!(r.solved || prev.solved),
     solvedBy: by,
     byLang: {...base, [lang]: {code, passed: r.passed, total: r.total, solved: !!(r.solved || pb.solved || by[lang]), acCode: r.solved ? code : (pb.acCode || null)}},
+    score: r.score != null ? r.score : null,
+    bestScore: Math.max(prev.bestScore || 0, r.score || 0),
     lastStatus: r.solved ? "AC" : (r.first || "WA"),
     tries: (prev.tries || 0) + 1
   };
